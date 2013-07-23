@@ -64,32 +64,30 @@ public class Expression {
 	// Print the values in the tree in preorder: root value first,
 	// then values in the left subtree (in preorder), then values
 	// in the right subtree (in preorder).
-	public void printPreorder ( ) {
-		printPreorder (myRoot);
-		System.out.println ( );
+	public String toPreorderString( ) {
+		return toPreorderString (myRoot);
 	}
 
-	private static void printPreorder (ExpNode t) {
+	private static String toPreorderString (ExpNode t) {
 		if (t != null) {
-			System.out.print (t.myItem + " ");
-			printPreorder (t.myLeft);
-			printPreorder (t.myRight);
+			return t.myItem + " " + toPreorderString(t.myLeft) + toPreorderString(t.myRight);
+		} else {
+			return "";
 		}
 	}
 
 	// Print the values in the tree in inorder: values in the left
 	// subtree first (in inorder), then the root value, then values
 	// in the right subtree (in inorder).
-	public void printInorder ( ) {
-		printInorder (myRoot);
-		System.out.println ( );
+	public String toInorderString( ) {
+		return toInorderString(myRoot);
 	}
 
-	private static void printInorder (ExpNode t) {
+	private static String toInorderString (ExpNode t) {
 		if (t != null) {
-			printInorder (t.myLeft);
-			System.out.print (t.myItem + " ");
-			printInorder (t.myRight);
+			return toInorderString(t.myLeft) + t.myItem + toInorderString(t.myRight);
+		} else {
+			return "";
 		}
 	}
 	
@@ -189,5 +187,34 @@ public class Expression {
 			}
 		}
 		
+		public boolean isEqual(ExpNode tn) {
+			if (!this.myItem.equals(tn.myItem)) {
+				return false;
+			} else if (!this.myRight.isEqual(tn.myRight)) {
+				return false;
+			} else if (!this.myLeft.isEqual(tn.myLeft)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+				
 	}
+
+
+	public static boolean isLegal(String string) {
+		// TODO Auto-generated method stub
+		return true;		
+	}
+	
+	
+	public boolean isLeftBranchOf(Expression e) {
+		return (this.myRoot.isEqual(e.myRoot.myLeft));
+	}
+	
+	public boolean isRightBranchOf(Expression e) {
+		return (this.myRoot.isEqual(e.myRoot.myRight));
+	}
+	
+	
 }
