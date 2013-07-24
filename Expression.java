@@ -56,7 +56,7 @@ public class Expression {
 		        opnd2 = expr.substring (opPos+1, expr.length()-1);
 		        op = expr.substring (opPos, opPos+1);	        	
 	        }
-	        return new ExpNode (op, expTreeHelper(opnd2), expTreeHelper(opnd1)); 
+	        return new ExpNode (op, expTreeHelper(opnd1), expTreeHelper(opnd2)); 
 	    }
 	}	
 	
