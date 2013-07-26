@@ -17,6 +17,12 @@ public class LineNumberTest extends TestCase {
 	}
 	
 	public void testisLegal() throws IllegalLineException{
-		LineNumber n = new LineNumber("abc");
+		LineNumber n = new LineNumber();
+		LineNumber m = new LineNumber();
+		n.increment();
+		n.addPoint();
+		m.increment();
+		m.increment();
+		assertFalse(LineNumber.isLegal(n.toString(), m));
 	}
 }
