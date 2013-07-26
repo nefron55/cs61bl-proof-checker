@@ -5,6 +5,7 @@ public class Proof {
 	private Stack<Expression> showing;
 	private HashMap<String,Expression> facts; // changed key to String (allows for names) LineNumber.toString() should be called when adding to HashMaps
 	private LinkedList<String> printQueue;
+	private boolean isDone = false;
 	
 	public Proof (TheoremSet theorems) {
 		ln = new LineNumber();
@@ -28,6 +29,7 @@ public class Proof {
 				System.out.println(printQueue.get(i));
 			}
 			ln.increment();
+			//System.out.print(toString());
 		} else {
 			// try to split into reason and expression
 			String[] parts = x.split(" ");
@@ -45,9 +47,10 @@ public class Proof {
 				}
 			// "assume" exp
 			} else if (parts[0].equals("assume") 
-					&& Expression.isLegal(parts[1]) && parts.length == 2) {
+					&& Expression.isLegal(parts[1]) && parts.length == 2
+					&& (printQueue.getLast().trim().split(" ")[0].equals("show") || printQueue.getLast().trim().split(" ")[0].equals("assume"))) {
 				//		add exp to "facts" array (facts are assumptions, inferred results, theorems)
-				//		increment line number	
+				//		increment line number
 				facts.put(ln.toString(), new Expression(parts[1]));
 				ln.increment();
 
@@ -67,13 +70,19 @@ public class Proof {
 				// TODO need to check these are legal line numbers to use in inference
 				// i.e. we're not outside their "domain" of validity
 				// TODO also need to handle failure case where fact with such number doesn't exist
-				Expression e1 = getFactByLineNumber(new LineNumber(parts[1]));
-				Expression e1then2 = getFactByLineNumber(new LineNumber(parts[2]));
+				Expression e1 = getFactByLineNumber(parts[1]);
+				Expression e1then2 = getFactByLineNumber(parts[2]);
 				Expression e2 = new Expression(parts[3]);
 				if (e1.isLeftBranchOf(e1then2) && e2.isRightBranchOf(e1then2)) {
 					facts.put(ln.toString(), e2);
-					if (e2.equals(showing.peek())) showing.pop();
-					ln.resetPoint();
+					if (e2.equals(showing.peek())){
+						showing.pop();
+					}
+					if (LineNumber.lineLevel(ln.toString()) != 0){
+						ln.resetPoint();
+					} else {
+						isDone = true;
+					}
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Ponens");
 				}								
@@ -83,6 +92,25 @@ public class Proof {
 					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
 					&& Expression.isLegal(parts[3]) && parts.length == 4) {
 				
+				//what you need for MT: p=>q and ~q gives you ~p
+				
+				Expression e1 = getFactByLineNumber(parts[1]);
+				Expression e1then2 = getFactByLineNumber(parts[2]);
+				Expression e2 = new Expression(parts[3]); 
+				if(e2.myRoot.myItem.toString().equals("~") && e1.myRoot.myItem.toString().equals("~") && 
+					e1.myRoot.myRight.isEqual(e1then2.myRoot.myRight) && e1then2.myRoot.myLeft.isEqual(e2.myRoot.myRight)){
+					facts.put(ln.toString(), e2);
+					if (e2.equals(showing.peek())){
+						showing.pop();
+					}
+					if  (LineNumber.lineLevel(ln.toString()) != 0) {
+						ln.resetPoint();
+					} else {
+						isDone = true;
+					}
+				} else {
+					throw new IllegalInferenceException("Illegal Modus Tollens");
+				}
 				// TODO
 				
 			// "co" ln1 ln2 exp
@@ -104,14 +132,14 @@ public class Proof {
 				//		else 
 				//			throw IllegalInferenceException
 				// 
-				LineNumber refln = new LineNumber(parts[1]);
 				Expression e = new Expression(parts[2]);
-				if (getFactByLineNumber(refln).isRightBranchOf(e)) {
+				Expression factoid = getFactByLineNumber(parts[1]);
+				if (factoid.isRightBranchOf(e)) {
 					facts.put(ln.toString(), e);
 					if (e.equals(showing.peek())) showing.pop();
-					ln.resetPoint();
+					if (LineNumber.lineLevel(ln.toString()) != 0) ln.resetPoint();
 				} else {
-					throw new IllegalInferenceException("Illegal Modus Ponens");
+					throw new IllegalInferenceException("Illegal Implication");
 				}
 
 
@@ -125,6 +153,9 @@ public class Proof {
 			
 				
 			} else {
+				for (int i = 0; i < parts.length; i++){
+					System.out.println(parts[i]);
+				}
 				throw new IllegalLineException("Wrong number of things");
 			}
 			
@@ -138,21 +169,21 @@ public class Proof {
 		}
 	}
 	
-	public String toString ( ) {
+	public String toString () {
 		String str = "";
 		for (int i = 0; i < printQueue.size(); i++){
-			str += printQueue.get(i) + "\n";
+			str += printQueue.get(i) + "/n"; //need to account for /n
 		}
 		return str;
 	}
 
 	public boolean isComplete ( ) {
 		// TODO
-		return false;
+		return isDone;
 	}
 	
-	private Expression getFactByLineNumber(LineNumber ln) {
-		return facts.get(ln.toString());
+	private Expression getFactByLineNumber(String ln) {
+		return facts.get(ln);
 	}
 	
 	// for debugging, remove later
