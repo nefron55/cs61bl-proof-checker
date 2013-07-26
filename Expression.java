@@ -24,7 +24,9 @@ public class Expression {
 	    	} else {
 	    		throw new IllegalLineException("bad line");
 	    	}
-	    } else {
+	    } else if (expr.charAt(1) == '~'){ 
+	    	return new ExpNode(expr.charAt(1), null, expTreeHelper(expr.substring(2, expr.length()-1)));
+		} else {
 	        // expr is a parenthesized expression.
 	        // Strip off the beginning and ending parentheses,
 	        // find the main operator (an occurrence of &, |, or => 
@@ -175,7 +177,7 @@ public class Expression {
 				return false;
 			}
 		}
-		
+	
 		// not sure if this will be necessary
 		public boolean isMyItemInt() {
 			if (myItem instanceof Integer) return true;
@@ -190,9 +192,11 @@ public class Expression {
 		public boolean isEqual(ExpNode tn) {
 			if (!this.myItem.equals(tn.myItem)) {
 				return false;
-			} else if (!this.myRight.isEqual(tn.myRight)) {
+			} else if (this.myRight == null && tn.myRight == null && this.myLeft == null && tn.myRight == null){
+				return true;
+			} else if (this.myRight != null && tn.myRight != null && !this.myRight.isEqual(tn.myRight)) {
 				return false;
-			} else if (!this.myLeft.isEqual(tn.myLeft)) {
+			} else if (this.myLeft != null && tn.myLeft != null && !this.myLeft.isEqual(tn.myLeft)) {
 				return false;
 			} else {
 				return true;
@@ -215,6 +219,5 @@ public class Expression {
 	public boolean isRightBranchOf(Expression e) {
 		return (this.myRoot.isEqual(e.myRoot.myRight));
 	}
-	
 	
 }
