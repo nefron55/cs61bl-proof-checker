@@ -1,5 +1,5 @@
 public class Expression {
-	private ExpNode myRoot;	
+	public ExpNode myRoot;	
 	
 	// not sure if this will be necessary
 	public Expression ( ) {
@@ -16,24 +16,30 @@ public class Expression {
 
 	private ExpNode expTreeHelper (String expr) throws IllegalLineException {
 	    if (expr.charAt (0) != '(') {
-	    	// if not parenthesized, the only possible legal inputs are a or ~a
+	    	// if not parenthesized, the only possible legal inputs are:
+	    	// 1) a
+	    	// 2) ~a
+	    	// 3) ~(smth)
 	    	if (expr.length() == 1 && Character.isLetter(expr.charAt(0))) {
 	    		return new ExpNode(expr.charAt(0));
 	    	} else if (expr.length() == 2 && expr.charAt(0) == '~' && Character.isLetter(expr.charAt(1))) {
 	    		return new ExpNode(expr.charAt(0), null, new ExpNode(expr.charAt(1)));
+	    	} else if (expr.charAt(0) == '~' && expr.charAt(1) == '(') {
+	    		return new ExpNode(expr.charAt(0), null, expTreeHelper(expr.substring(1, expr.length()-1)));
 	    	} else {
-	    		throw new IllegalLineException("bad line");
+	    		throw new IllegalLineException("bad line: " + expr);
 	    	}
-	    } else if (expr.charAt(1) == '~'){ 
-	    	return new ExpNode(expr.charAt(1), null, expTreeHelper(expr.substring(2, expr.length()-1)));
+	    } else if (expr.charAt(1) == '~' && expr.charAt(2) == '(') {
+	    		return new ExpNode(expr.charAt(1), null, expTreeHelper(expr.substring(2, expr.length()-2)));
 		} else {
 	        // expr is a parenthesized expression.
 	        // Strip off the beginning and ending parentheses,
 	        // find the main operator (an occurrence of &, |, or => 
 	    	// not nested in parentheses), and construct the two subtrees.
 	        int nesting = 0;
-	        int opPos = 0;
+	        int opPos = 0; // operator position
 	        boolean isFollows = false;
+	        // TODO the loop below is missing error handling (like when there's no operator but there should be)
 	        for (int k=1; k<expr.length()-1; k++) {
 	            if (expr.charAt(k) == '(') { 
 	            	nesting++;
@@ -49,6 +55,7 @@ public class Expression {
 	            	break;
 	            }
 	        }
+	        if (opPos == 0) throw new IllegalLineException("proper operator not found in " + expr);
 	        String opnd1 = expr.substring (1, opPos);
 	        String opnd2, op;
 	        if (isFollows) {
@@ -86,11 +93,19 @@ public class Expression {
 	}
 
 	private static String toInorderString (ExpNode t) {
-		if (t != null) {
-			return toInorderString(t.myLeft) + t.myItem + toInorderString(t.myRight);
-		} else {
+		if (t == null) {
 			return "";
+		} else if (t.isLeaf()) {
+			return "" + t.myItem;
+		} else if (t.myItem.equals('~') && t.myLeft == null) {
+			return "~" + toInorderString(t.myRight);
+		} else {
+			return "(" + toInorderString(t.myLeft) + t.myItem + toInorderString(t.myRight) + ")"; 
 		}
+	}
+	
+	public boolean equals(Expression e) {
+		return this.toInorderString().equals(e.toInorderString());
 	}
 	
 //	public void fillSampleTree1 ( ) {
@@ -140,9 +155,9 @@ public class Expression {
 	private static final String indent1 = "    ";
 		
 	private static void printHelper (ExpNode root, int indent) {
-	    if (root.myLeft != null) printHelper(root.myLeft, indent+1);
-	    println (root.myItem, indent);
 	    if (root.myRight != null) printHelper (root.myRight, indent+1) ;
+	    println (root.myItem, indent);
+		if (root.myLeft != null) printHelper(root.myLeft, indent+1);
 	}
 			
 	private static void println (Object obj, int indent) {
@@ -153,8 +168,8 @@ public class Expression {
 	}
 	
 
-	private static class ExpNode {
-		
+	static class ExpNode {
+		// TODO myItem should be String, not Object
 		public Object myItem;
 		public ExpNode myLeft;
 		public ExpNode myRight;
@@ -207,7 +222,7 @@ public class Expression {
 
 
 	public static boolean isLegal(String string) {
-		// TODO Auto-generated method stub
+		// TODO OR NOTTODO Auto-generated method stub
 		return true;		
 	}
 	

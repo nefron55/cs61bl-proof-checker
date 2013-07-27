@@ -77,11 +77,9 @@ public class Proof {
 					facts.put(ln.toString(), e2);
 					if (e2.equals(showing.peek())){
 						showing.pop();
-					}
-					if (LineNumber.lineLevel(ln.toString()) != 0){
-						ln.resetPoint();
-					} else {
-						isDone = true;
+						if (LineNumber.lineLevel(ln.toString()) != 0){
+							ln.resetPoint();
+						}
 					}
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Ponens");
@@ -102,11 +100,9 @@ public class Proof {
 					facts.put(ln.toString(), e2);
 					if (e2.equals(showing.peek())){
 						showing.pop();
-					}
-					if  (LineNumber.lineLevel(ln.toString()) != 0) {
-						ln.resetPoint();
-					} else {
-						isDone = true;
+						if  (LineNumber.lineLevel(ln.toString()) != 0) {
+							ln.resetPoint();
+						}
 					}
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Tollens");
@@ -136,8 +132,10 @@ public class Proof {
 				Expression factoid = getFactByLineNumber(parts[1]);
 				if (factoid.isRightBranchOf(e)) {
 					facts.put(ln.toString(), e);
-					if (e.equals(showing.peek())) showing.pop();
-					if (LineNumber.lineLevel(ln.toString()) != 0) ln.resetPoint();
+					if (e.equals(showing.peek())) {
+						showing.pop();					
+						if (LineNumber.lineLevel(ln.toString()) != 0) ln.resetPoint();
+					}
 				} else {
 					throw new IllegalInferenceException("Illegal Implication");
 				}
@@ -159,12 +157,22 @@ public class Proof {
 				throw new IllegalLineException("Wrong number of things");
 			}
 			
+			// Now that we've done input exception checking, 
+			// it's safe to add the line to print queue 			
 			printQueue.add(x);
 			
-			// Now that we've done input exception checking, 
-			// it's safe to add the line to print queue 
-			// printQueue.add(x);
-			
+			// Now check if there's anything left on showing stack
+			// If not and we're not on line 1, then the proof is complete
+			if (showing.isEmpty() && !ln.toString().equals("1")) {
+				isDone = true;
+			}
+			// FOR DEBUGGING:
+			System.out.println("isComplete? " + isDone + ". Things on showing stack:");
+			Stack<Expression> showCopy = new Stack<Expression>();
+			showCopy.addAll(showing);
+			while (!showCopy.isEmpty()) {
+				System.out.println(showCopy.pop().toInorderString());
+			}
 			// DONE PROCESSING USER INPUT, REST HAPPENS IN ProofChecker.main[]			
 		}
 	}
@@ -178,7 +186,6 @@ public class Proof {
 	}
 
 	public boolean isComplete ( ) {
-		// TODO
 		return isDone;
 	}
 	
