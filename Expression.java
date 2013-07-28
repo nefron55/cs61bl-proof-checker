@@ -1,15 +1,15 @@
 public class Expression {
 	public ExpNode myRoot;	
-	
+
 	// not sure if this will be necessary
 	public Expression ( ) {
 		myRoot = null;
 	}
-	
+
 	public Expression (ExpNode t) {
 		myRoot = t;
 	}
-	
+
 	public Expression (String s) throws IllegalLineException {
 		myRoot = expTreeHelper(s);
 	}	
@@ -21,16 +21,12 @@ public class Expression {
 	    	// 2) ~a
 	    	// 3) ~(smth)
 	    	if (expr.length() == 1 && Character.isLetter(expr.charAt(0))) {
-	    		return new ExpNode(expr.charAt(0));
-	    	} else if (expr.length() == 2 && expr.charAt(0) == '~' && Character.isLetter(expr.charAt(1))) {
-	    		return new ExpNode(expr.charAt(0), null, new ExpNode(expr.charAt(1)));
-	    	} else if (expr.charAt(0) == '~' && expr.charAt(1) == '(') {
-	    		return new ExpNode(expr.charAt(0), null, expTreeHelper(expr.substring(1, expr.length()-1)));
+	    		return new ExpNode(expr.substring(0,1));
+	    	} else if (expr.charAt(0) == '~') {
+	    		return new ExpNode(expr.substring(0,1), null, expTreeHelper(expr.substring(1, expr.length())));
 	    	} else {
 	    		throw new IllegalLineException("bad line: " + expr);
 	    	}
-	    } else if (expr.charAt(1) == '~' && expr.charAt(2) == '(') {
-	    		return new ExpNode(expr.charAt(1), null, expTreeHelper(expr.substring(2, expr.length()-2)));
 		} else {
 	        // expr is a parenthesized expression.
 	        // Strip off the beginning and ending parentheses,
@@ -55,7 +51,9 @@ public class Expression {
 	            	break;
 	            }
 	        }
-	        if (opPos == 0) throw new IllegalLineException("proper operator not found in " + expr);
+	        if (opPos == 0){
+	        	throw new IllegalLineException("proper operator not found in " + expr);
+	        }
 	        String opnd1 = expr.substring (1, opPos);
 	        String opnd2, op;
 	        if (isFollows) {
@@ -68,8 +66,8 @@ public class Expression {
 	        return new ExpNode (op, expTreeHelper(opnd1), expTreeHelper(opnd2)); 
 	    }
 	}	
-	
-	
+
+
 	// Print the values in the tree in preorder: root value first,
 	// then values in the left subtree (in preorder), then values
 	// in the right subtree (in preorder).
@@ -96,25 +94,25 @@ public class Expression {
 		if (t == null) {
 			return "";
 		} else if (t.isLeaf()) {
-			return "" + t.myItem;
-		} else if (t.myItem.equals('~') && t.myLeft == null) {
+			return t.myItem;
+		} else if (t.myItem.equals("~")) {
 			return "~" + toInorderString(t.myRight);
 		} else {
 			return "(" + toInorderString(t.myLeft) + t.myItem + toInorderString(t.myRight) + ")"; 
 		}
 	}
-	
+
 	public boolean equals(Expression e) {
 		return this.toInorderString().equals(e.toInorderString());
 	}
-	
+
 //	public void fillSampleTree1 ( ) {
 //		myRoot =
 //		    new TreeNode ("a",
 //			new TreeNode ("b"),
 //			new TreeNode ("c"));
 //	}
-	
+
 	public static int height(ExpNode n) {
 		if (n == null) {
 			return 0;
@@ -124,7 +122,7 @@ public class Expression {
             return Math.max(height(n.myLeft), height(n.myRight)) + 1;
         }
 	}
-	
+
 	public boolean isCompletelyBalanced() {
 		if (myRoot == null) {
 			return true;
@@ -132,7 +130,7 @@ public class Expression {
 			return isCompletelyBalancedHelper(myRoot);
 		}
 	}
-	
+
 	private boolean isCompletelyBalancedHelper(ExpNode n) {
 		if (n.myLeft == null && n.myRight == null) {
 			return true;
@@ -143,48 +141,48 @@ public class Expression {
 			return (isCompletelyBalancedHelper(n.myLeft) 
 					&& isCompletelyBalancedHelper(n.myRight));
 		}
-		
+
 	}
-	
+
 	public void print ( ) {
 	    if (myRoot != null) {
 	        printHelper (myRoot, 0);
 	    }
 	}
-		
+
 	private static final String indent1 = "    ";
-		
+
 	private static void printHelper (ExpNode root, int indent) {
 	    if (root.myRight != null) printHelper (root.myRight, indent+1) ;
 	    println (root.myItem, indent);
 		if (root.myLeft != null) printHelper(root.myLeft, indent+1);
 	}
-			
+
 	private static void println (Object obj, int indent) {
 	    for (int k=0; k<indent; k++) {
 	        System.out.print (indent1);
 	    }
 	    System.out.println (obj);
 	}
-	
+
 
 	static class ExpNode {
 		// TODO myItem should be String, not Object
-		public Object myItem;
+		public String myItem;
 		public ExpNode myLeft;
 		public ExpNode myRight;
-		
-		public ExpNode (Object obj) {
+
+		public ExpNode (String obj) {
 			myItem = obj;
 			myLeft = myRight = null;
 		}
-		
-		public ExpNode (Object obj, ExpNode left, ExpNode right) {
+
+		public ExpNode (String obj, ExpNode left, ExpNode right) {
 			myItem = obj;
 			myLeft = left;
 			myRight = right;
 		}
-		
+
 		public boolean isLeaf() {
 			if (myLeft == null && myRight == null) {
 				return true;
@@ -192,18 +190,7 @@ public class Expression {
 				return false;
 			}
 		}
-	
-		// not sure if this will be necessary
-		public boolean isMyItemInt() {
-			if (myItem instanceof Integer) return true;
-			try {
-				int x = Integer.parseInt((String) myItem);
-				return true;
-			} catch (NumberFormatException e) {
-				return false;
-			}
-		}
-		
+
 		public boolean isEqual(ExpNode tn) {
 			if (!this.myItem.equals(tn.myItem)) {
 				return false;
@@ -217,7 +204,7 @@ public class Expression {
 				return true;
 			}
 		}
-				
+
 	}
 
 
@@ -226,13 +213,43 @@ public class Expression {
 		return true;		
 	}
 	
+	public Expression replaceLeaves(Expression input) throws IllegalLineException{
+		Expression copy = new Expression(this.toInorderString());
+		if (input != null){
+			copy.myRoot = replaceHelper(copy.myRoot, input.myRoot);
+		}
+		return copy;
+	}
 	
+	private ExpNode replaceHelper(ExpNode source, ExpNode input) throws IllegalLineException{
+		if (source.isLeaf()){
+			return input;
+		}
+		if (input.isLeaf() || !source.myItem.equals(input.myItem)){
+			throw new IllegalLineException("Line not compatible with theorem.");
+		}
+		if (source.myLeft != null && input.myLeft != null){
+			source.myLeft = replaceHelper(source.myLeft, input.myLeft);
+		}
+		source.myRight = replaceHelper(source.myRight, input.myRight);
+		return source;
+	}
+	
+	public boolean isApplicable(Expression input) throws IllegalLineException{
+		Expression copy = this.replaceLeaves(input);
+		if (copy.toInorderString().equals(input.toInorderString())){
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	public boolean isLeftBranchOf(Expression e) {
 		return (this.myRoot.isEqual(e.myRoot.myLeft));
 	}
-	
+
 	public boolean isRightBranchOf(Expression e) {
 		return (this.myRoot.isEqual(e.myRoot.myRight));
 	}
-	
+
 }
