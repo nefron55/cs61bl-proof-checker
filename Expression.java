@@ -31,24 +31,6 @@ public class Expression {
 	    	}
 		} else {
 	        // expr is a parenthesized expression.
-	        // strip off any extra enclosing parentheses TODO - should they be legal?
-			if (expr.startsWith("((") && expr.endsWith("))")) {
-				try {
-					return expTreeHelper(expr.substring(1, expr.length()-1));
-				} catch (IllegalLineException e) {
-					System.out.println("FAIL: " + e.getMessage());
-					System.out.println("When trying to parse " + expr.substring(1, expr.length()-1));
-					// move on and try to parse without stripping off enclosing parens
-				}
-			} 
-			// this is to try to find (~(p=>q)) - although not sure this is actually a legal exp
-			if (expr.startsWith("(~(") && expr.endsWith("))")) {
-				try {
-					return new ExpNode("~", null, expTreeHelper(expr.substring(2, expr.length()-1)));
-				} catch (IllegalLineException e) {
-					// move on and try to parse without stripping off enclosing parens  
-				}
-			}
 	        // find the main operator (an occurrence of &, |, or => 
 	    	// not nested in parentheses), and construct the two subtrees.
 	        int nesting = 0;
