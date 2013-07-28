@@ -6,14 +6,15 @@ public class Proof {
 	private HashMap<String,Expression> facts; // changed key to String (allows for names) LineNumber.toString() should be called when adding to HashMaps
 	private LinkedList<String> printQueue;
 	private boolean isDone = false;
-	
+	private boolean isDebugging = true;
+
 	public Proof (TheoremSet theorems) {
 		ln = new LineNumber();
 		showing = new Stack<Expression>();
-		facts = new HashMap<String,Expression>();
+		facts = theorems.transfer();
 		printQueue = new LinkedList<String>();
 	}
-	
+
 	public LineNumber nextLineNumber(){
 		return ln;
 	}
@@ -48,7 +49,8 @@ public class Proof {
 			// "assume" exp
 			} else if (parts[0].equals("assume") 
 					&& Expression.isLegal(parts[1]) && parts.length == 2
-					&& (printQueue.getLast().trim().split(" ")[0].equals("show") || printQueue.getLast().trim().split(" ")[0].equals("assume"))) {
+					&& (printQueue.getLast().trim().split(" ")[0].equals("show") ||
+							(printQueue.getLast().trim().split(" ")[0].equals("assume") && isDebugging))){
 				//		add exp to "facts" array (facts are assumptions, inferred results, theorems)
 				//		increment line number
 				facts.put(ln.toString(), new Expression(parts[1]));
@@ -84,14 +86,14 @@ public class Proof {
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Ponens");
 				}								
-				
+
 			// "mt" ln1 ln2 exp
 			} else if (parts[0].equals("mt")
 					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
 					&& Expression.isLegal(parts[3]) && parts.length == 4) {
-				
+
 				//what you need for MT: p=>q and ~q gives you ~p
-				
+
 				Expression e1 = getFactByLineNumber(parts[1]);
 				Expression e1then2 = getFactByLineNumber(parts[2]);
 				Expression e2 = new Expression(parts[3]); 
@@ -108,14 +110,14 @@ public class Proof {
 					throw new IllegalInferenceException("Illegal Modus Tollens");
 				}
 				// TODO
-				
+
 			// "co" ln1 ln2 exp
 			} else if (parts[0].equals("co")
 					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
 					&& Expression.isLegal(parts[3]) && parts.length == 4) {
-					
+
 				// TODO
-				
+
 			// "ic" ln1 exp
 			} else if (parts[0].equals("ic") && parts.length == 3 
 					&& LineNumber.isLegal(parts[1], ln) 
@@ -145,22 +147,28 @@ public class Proof {
 			} else if (parts[0].equals("repeat") 
 					&& LineNumber.isLegal(parts[1], ln) 
 					&& Expression.isLegal(parts[2]) && parts.length == 3) {
-				
+
 				// TODO
 				// what does "repeat" do?				
-			
-				
+			} else if (facts.containsKey(parts[0]) && Expression.isLegal(parts[1])){
+				Expression exp = facts.get(parts[0]);
+				Expression e = new Expression(parts[1]);
+				if (exp.isApplicable(e)){
+					facts.put(ln.toString(), e);
+				} else {
+					throw new IllegalLineException("Line not compatible with theorem.");
+				}
 			} else {
 				for (int i = 0; i < parts.length; i++){
 					System.out.println(parts[i]);
 				}
 				throw new IllegalLineException("Wrong number of things");
 			}
-			
+
 			// Now that we've done input exception checking, 
 			// it's safe to add the line to print queue 			
 			printQueue.add(x);
-			
+
 			// Now check if there's anything left on showing stack
 			// If not and we're not on line 1, then the proof is complete
 			if (showing.isEmpty() && !ln.toString().equals("1")) {
@@ -176,7 +184,7 @@ public class Proof {
 			// DONE PROCESSING USER INPUT, REST HAPPENS IN ProofChecker.main[]			
 		}
 	}
-	
+
 	public String toString () {
 		String str = "";
 		for (int i = 0; i < printQueue.size(); i++){
@@ -188,11 +196,11 @@ public class Proof {
 	public boolean isComplete ( ) {
 		return isDone;
 	}
-	
+
 	private Expression getFactByLineNumber(String ln) {
 		return facts.get(ln);
 	}
-	
+
 	// for debugging, remove later
 	private void printAllFacts() {
 		Iterator<String> it = facts.keySet().iterator();
