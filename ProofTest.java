@@ -37,12 +37,21 @@ public class ProofTest extends TestCase {
 		"ic 3 (((p=>q)=>q)=>((q=>p)=>p))"	//4
 	};
 	
+	private static final String[] sampleProof4 = {
+		"show (~~p=>p)", //1
+		"assume ~~p", //2
+		"show p", //3
+		"assume ~p", //3.1
+		"co 2 3.1 p", //3.2
+		"ic 3 (~~p=>p)", //4
+	};
 	public static final List<String[]> sampleProofs = new ArrayList<String[]>();
 	
 		public void testIsComplete() {
-//			sampleProofs.add(sampleProof1);
-//			sampleProofs.add(sampleProof2);
+			sampleProofs.add(sampleProof1);
+			sampleProofs.add(sampleProof2);
 			sampleProofs.add(sampleProof3);
+			sampleProofs.add(sampleProof4);
 			
 			for (String[] sampleProof : sampleProofs) {
 				Proof p = new Proof();
@@ -69,6 +78,30 @@ public class ProofTest extends TestCase {
 		
 		public void testLineNumber() {
 			
+		}
+		
+		public void testisNegation() throws IllegalLineException {
+			Expression e = new Expression("~p");
+			Expression e1 = new Expression("~(p|q)");
+			Expression e2 = new Expression("a");
+			Expression e3 = new Expression("(p=>q)");
+			Expression e4 = new Expression("~(p=>q)");
+			assertTrue(e.isNegation());
+			assertTrue(e1.isNegation());
+			assertFalse(e2.isNegation());
+			assertFalse(e3.isNegation());
+			assertTrue(e4.isNegation());
+		}
+		
+		public void testisFollows() throws IllegalLineException {
+			Expression e = new Expression("~(p=>q)");
+			Expression e1 = new Expression("~(p|q)");
+			Expression e2 = new Expression("a");
+			Expression e3 = new Expression("(p=>q)");
+			assertFalse(e.isFollows());
+			assertFalse(e1.isFollows());
+			assertFalse(e2.isFollows());
+			assertTrue(e3.isFollows());
 		}
 	
 		public static void testProofs() throws IllegalLineException, IllegalInferenceException {

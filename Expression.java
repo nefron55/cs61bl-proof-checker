@@ -277,5 +277,17 @@ public class Expression {
 	public boolean isFollows() {
 		return this.myRoot.myItem.equals("=>");
 	}
+	
+	public ExpNode getMyRight() {
+		return this.myRoot.myRight;
+	}
+		
+	public ExpNode getMyLeft() {
+		return this.myRoot.myLeft;
+	}
+	
+	public String getMyItem() {
+		return this.myRoot.myItem;
+	}
 
 }

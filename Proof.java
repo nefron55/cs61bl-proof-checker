@@ -89,11 +89,10 @@ public class Proof {
 				}								
 
 			// "mt" ln1 ln2 exp
-			} else if (parts[0].equals("mt")
+			} else if (parts[0].equals("mt") && parts.length == 4
 					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
-					&& Expression.isLegal(parts[3]) && parts.length == 4) {
-
-				//what you need for MT: p=>q and ~q gives you ~p
+					&& Expression.isLegal(parts[3])) {
+				// what you need for MT: p=>q and ~q gives you ~p
 				Expression part1 = getFactByLineNumber(parts[1]);
 				Expression part2 = getFactByLineNumber(parts[2]); 
 				Expression note2, e1then2;
@@ -108,9 +107,9 @@ public class Proof {
 				}
 				Expression note1 = new Expression(parts[3]); 
 				if(note1.isNegation() 
-					&& note1.myRoot.myRight.isEqual(e1then2.myRoot.myLeft) 
-					&& note2.myRoot.myRight.isEqual(e1then2.myRoot.myLeft)) {
-					this.completed(note2);
+					&& note1.getMyRight().isEqual(e1then2.getMyLeft()) 
+					&& note2.getMyRight().isEqual(e1then2.getMyRight())) {
+						this.completed(note1);
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Tollens");
 				}
@@ -123,8 +122,8 @@ public class Proof {
 				// what you need for CO: E and ~E gives you anything
 				Expression e1 = getFactByLineNumber(parts[1]);
 				Expression e2 = getFactByLineNumber(parts[2]);
-				if ((e1.myRoot.myItem.toString().equals("~") && e2.isRightBranchOf(e1))
-						|| (e2.myRoot.myItem.toString().equals("~") && e1.isRightBranchOf(e2))) {
+				if ((e1.isNegation() && e2.isRightBranchOf(e1))
+						|| (e2.isNegation() && e1.isRightBranchOf(e2))) {
 					Expression e = new Expression(parts[3]);
 					this.completed(e);
 				} else {
@@ -226,12 +225,15 @@ public class Proof {
 	}
 	
 	private void completed(Expression e) {
+		facts.put(ln.toString(), e);
 		if (e.equals(showing.peek())){
 			showing.pop();
 			if (LineNumber.lineLevel(ln.toString()) != 0){
 				ln.removePeriod();
+				facts.put(ln.toString(), e);
 			}
-			facts.put(ln.toString(), e);
+			ln.increment();
+		} else {
 			ln.increment();
 		}
 	}
