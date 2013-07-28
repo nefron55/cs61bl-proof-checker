@@ -94,13 +94,23 @@ public class Proof {
 					&& Expression.isLegal(parts[3]) && parts.length == 4) {
 
 				//what you need for MT: p=>q and ~q gives you ~p
-
-				Expression e1 = getFactByLineNumber(parts[1]);
-				Expression e1then2 = getFactByLineNumber(parts[2]);
-				Expression e2 = new Expression(parts[3]); 
-				if(e2.myRoot.myItem.toString().equals("~") && e1.myRoot.myItem.toString().equals("~") && 
-					e1.myRoot.myRight.isEqual(e1then2.myRoot.myRight) && e1then2.myRoot.myLeft.isEqual(e2.myRoot.myRight)){
-					this.completed(e2);
+				Expression part1 = getFactByLineNumber(parts[1]);
+				Expression part2 = getFactByLineNumber(parts[2]); 
+				Expression note2, e1then2;
+				if (part1.isNegation() && part2.isFollows()) {
+					note2 = part1;
+					e1then2 = part2;
+				} else if (part1.isFollows() && part2.isNegation()) {
+					note2 = part2;
+					e1then2 = part1;
+				} else {
+					throw new IllegalInferenceException("Illegal Modus Tollens");
+				}
+				Expression note1 = new Expression(parts[3]); 
+				if(note1.isNegation() 
+					&& note1.myRoot.myRight.isEqual(e1then2.myRoot.myLeft) 
+					&& note2.myRoot.myRight.isEqual(e1then2.myRoot.myLeft)) {
+					this.completed(note2);
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Tollens");
 				}

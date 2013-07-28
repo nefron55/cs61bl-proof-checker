@@ -269,5 +269,13 @@ public class Expression {
 	public boolean isRightBranchOf(Expression e) {
 		return (this.myRoot.isEqual(e.myRoot.myRight));
 	}
+	
+	public boolean isNegation() {
+		return this.myRoot.myItem.equals("~");
+	}
+	
+	public boolean isFollows() {
+		return this.myRoot.myItem.equals("=>");
+	}
 
 }
