@@ -12,7 +12,8 @@ public class LineNumberTest extends TestCase {
 		assertEquals(n.toString(), "2.2");
 		n.addPoint();
 		assertEquals(n.toString(), "2.2.1");
-		n.resetPoint();
+		n.removePeriod();
+		n.increment();
 		assertEquals(n.toString(), "2.3");
 	}
 	

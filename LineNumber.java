@@ -33,11 +33,13 @@ public class LineNumber {
 	
 	// in the course of extending a proof, if an inference is valid
 	// we drop off the last point and increment the preceding value by 1  
-	public void resetPoint() {
+//	public void resetPoint() {
+//		removePeriod();
+//		increment();
+//		}
+	
+	public void removePeriod() {
 		nums.remove(nums.size()-1);
-		int last = nums.get(nums.size()-1);
-		nums.set(nums.size()-1, last+1);
-		lines.add(toString());
 	}
 	
 	public void increment() {

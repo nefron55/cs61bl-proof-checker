@@ -20,17 +20,37 @@ public class ProofTest extends TestCase {
 		"ic 3 (p=>(~p=>q))"
 	};
 	
+	private static final String[] sampleProof3 = {
+		"show (((p=>q)=>q)=>((q=>p)=>p))", //1
+		"assume ((p=>q)=>q)", 	//2
+		"show ((q=>p)=>p)",		//3
+		"assume (q=>p)",		//3.1
+		"show p",				//3.2
+		"assume ~p",			//3.2.1
+		"mt 3.2.1 3.1 ~q",		//3.2.2
+		"mt 2 3.2.2 ~(p=>q)",	//3.2.3
+		"show (p=>q)",			//3.2.4
+		"assume p",				//3.2.4.1
+		"co 3.2.4.1 3.2.1 (p=>q)",	// 3.2.4.2
+		"co 3.2.4 3.2.3 p",		// 3.2.5
+		"ic 3.2 ((q=>p)=>p)",	// 3.3
+		"ic 3 (((p=>q)=>q)=>((q=>p)=>p))"	//4
+	};
+	
 	public static final List<String[]> sampleProofs = new ArrayList<String[]>();
 	
 		public void testIsComplete() {
-			sampleProofs.add(sampleProof1);
-			sampleProofs.add(sampleProof2);
+//			sampleProofs.add(sampleProof1);
+//			sampleProofs.add(sampleProof2);
+			sampleProofs.add(sampleProof3);
 			
 			for (String[] sampleProof : sampleProofs) {
 				Proof p = new Proof();
 				for (String line : sampleProof) {
 					try {
+						System.out.println(p.getLine() + " - extending proof with: " + line);
 						p.extendProof(line);
+						p.printAllFacts();
 					} catch (IllegalLineException e) {
 						fail(e.getMessage());
 						e.printStackTrace();
@@ -119,25 +139,33 @@ public class ProofTest extends TestCase {
 		}
 		
 		public static void testIC() throws IllegalLineException, IllegalInferenceException {
+			System.out.println("-------------------------------");
+
 			TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
 			p.extendProof("show (p=>q)");
 			p.extendProof("assume q");
 			p.extendProof("ic 2 (p=>q)");
+			p.printAllFacts();
 			
 			p = new Proof(t);
-			p.extendProof("show ((~(p=>q))=>(p=>q))");
+			p.extendProof("show (~(p=>q)=>(p=>q))");
 			p.extendProof("assume (p=>q)");
-			p.extendProof("ic 2 ((~(p=>q))=>(p=>q))");
+			p.extendProof("ic 2 (~(p=>q)=>(p=>q))");
+			p.printAllFacts();
+						
 		}
 		
 		public static void testRepeat() throws IllegalLineException, IllegalInferenceException {
+			System.out.println("-------------------------------");
 			TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
 			p.extendProof("show (p=>p)");
 			p.extendProof("show (p=>p)");
 			p.extendProof("assume p");
 			p.extendProof("ic 2.1 (p=>p)");
+			p.extendProof("print");
+			p.printAllFacts();
 			p.extendProof("repeat 2 (p=>p)");
 		}
 
@@ -149,5 +177,5 @@ public class ProofTest extends TestCase {
 			p.extendProof("assume (~p=>q)");
 			p.extendProof("mp 2 3 q");
 		}*/
-
+		
 	}

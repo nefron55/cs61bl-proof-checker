@@ -83,13 +83,7 @@ public class Proof {
 				Expression e1then2 = getFactByLineNumber(parts[2]);
 				Expression e2 = new Expression(parts[3]);
 				if (e1.isLeftBranchOf(e1then2) && e2.isRightBranchOf(e1then2)) {
-					facts.put(ln.toString(), e2);
-					if (e2.equals(showing.peek())){
-						showing.pop();
-						if (LineNumber.lineLevel(ln.toString()) != 0){
-							ln.resetPoint();
-						}
-					}
+					this.completed(e2);
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Ponens");
 				}								
@@ -106,24 +100,27 @@ public class Proof {
 				Expression e2 = new Expression(parts[3]); 
 				if(e2.myRoot.myItem.toString().equals("~") && e1.myRoot.myItem.toString().equals("~") && 
 					e1.myRoot.myRight.isEqual(e1then2.myRoot.myRight) && e1then2.myRoot.myLeft.isEqual(e2.myRoot.myRight)){
-					facts.put(ln.toString(), e2);
-					if (e2.equals(showing.peek())){
-						showing.pop();
-						if  (LineNumber.lineLevel(ln.toString()) != 0) {
-							ln.resetPoint();
-						}
-					}
+					this.completed(e2);
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Tollens");
 				}
-				// TODO
 
 			// "co" ln1 ln2 exp
 			} else if (parts[0].equals("co")
 					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
 					&& Expression.isLegal(parts[3]) && parts.length == 4) {
 
-				// TODO
+				// what you need for CO: E and ~E gives you anything
+				Expression e1 = getFactByLineNumber(parts[1]);
+				Expression e2 = getFactByLineNumber(parts[2]);
+				if ((e1.myRoot.myItem.toString().equals("~") && e2.isRightBranchOf(e1))
+						|| (e2.myRoot.myItem.toString().equals("~") && e1.isRightBranchOf(e2))) {
+					Expression e = new Expression(parts[3]);
+					this.completed(e);
+				} else {
+					throw new IllegalInferenceException("Illegal Contradiction");
+				}
+				
 
 			// "ic" ln1 exp
 			} else if (parts[0].equals("ic") && parts.length == 3 
@@ -140,24 +137,25 @@ public class Proof {
 				Expression e = new Expression(parts[2]);
 				Expression factoid = getFactByLineNumber(parts[1]);
 				if (factoid.isRightBranchOf(e)) {
-					facts.put(ln.toString(), e);
-					if (e.equals(showing.peek())) {
-						showing.pop();					
-						if (LineNumber.lineLevel(ln.toString()) != 0) ln.resetPoint();
-					}
+					this.completed(e);
 				} else {
 					throw new IllegalInferenceException("Illegal Implication");
 				}
 
 
 			// "repeat" ln1 exp
-			} else if (parts[0].equals("repeat") 
+			} else if (parts[0].equals("repeat")
 					&& LineNumber.isLegal(parts[1], ln) 
-					&& Expression.isLegal(parts[2]) && parts.length == 3 && !getFactByLineNumber(parts[1]).myRoot.equals("1")) {
+					&& Expression.isLegal(parts[2]) && parts.length == 3 
+					//&& getFactByLineNumber(parts[1]).myRoot.equals("1")
+					) {
 				//cant access a line that begins with 'show'
 				// if expression given by line number in repeat statement is in facts, then show.pop and put it in facts again
 				//else illegal repeat statement
-				if(!showing.peek().equals(getFactByLineNumber(parts[1])) && getFactByLineNumber(parts[1]).equals(parts[2])){
+				System.out.println(getFactByLineNumber(parts[1]).toInorderString());
+				if(//!showing.peek().equals(getFactByLineNumber(parts[1])) &&
+					 !parts[1].equals("1")
+						&& getFactByLineNumber(parts[1]).equals(new Expression(parts[2]))){
 					Expression e = new Expression(parts[2]);
 					facts.put(ln.toString(), e);
 					showing.pop();
@@ -216,13 +214,31 @@ public class Proof {
 	private Expression getFactByLineNumber(String ln) {
 		return facts.get(ln);
 	}
+	
+	private void completed(Expression e) {
+		if (e.equals(showing.peek())){
+			showing.pop();
+			if (LineNumber.lineLevel(ln.toString()) != 0){
+				ln.removePeriod();
+			}
+			facts.put(ln.toString(), e);
+			ln.increment();
+		}
+	}
+	
 
 	// for debugging, remove later
-	private void printAllFacts() {
+	public void printAllFacts() {
+		System.out.println("-----facts-----");
 		Iterator<String> it = facts.keySet().iterator();
 		while (it.hasNext()) {
 			String key = it.next();
 			System.out.println(key + " - " + facts.get(key).toInorderString());
 		}
+		System.out.println("--end-facts---\n");
+	}
+	
+	public LineNumber getLine() {
+		return ln;
 	}
 }
