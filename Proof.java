@@ -153,10 +153,19 @@ public class Proof {
 			// "repeat" ln1 exp
 			} else if (parts[0].equals("repeat") 
 					&& LineNumber.isLegal(parts[1], ln) 
-					&& Expression.isLegal(parts[2]) && parts.length == 3) {
-
+					&& Expression.isLegal(parts[2]) && parts.length == 3 && !getFactByLineNumber(parts[1]).myRoot.equals("1")) {
+				//cant access a line that begins with 'show'
+				// if expression given by line number in repeat statement is in facts, then show.pop and put it in facts again
+				//else illegal repeat statement
+				if(!showing.peek().equals(getFactByLineNumber(parts[1])) && getFactByLineNumber(parts[1]).equals(parts[2])){
+					Expression e = new Expression(parts[2]);
+					facts.put(ln.toString(), e);
+					showing.pop();
+				} else {
+					throw new IllegalInferenceException("Illegal Repeat Statement");
+				}
+					
 				// TODO
-				// what does "repeat" do?				
 			} else if (facts.containsKey(parts[0]) && Expression.isLegal(parts[1])){
 				Expression exp = facts.get(parts[0]);
 				Expression e = new Expression(parts[1]);

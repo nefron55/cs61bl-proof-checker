@@ -130,6 +130,16 @@ public class ProofTest extends TestCase {
 			p.extendProof("assume (p=>q)");
 			p.extendProof("ic 2 ((~(p=>q))=>(p=>q))");
 		}
+		
+		public static void testRepeat() throws IllegalLineException, IllegalInferenceException {
+			TheoremSet t = new TheoremSet();
+			Proof p = new Proof(t);
+			p.extendProof("show (p=>p)");
+			p.extendProof("show (p=>p)");
+			p.extendProof("assume p");
+			p.extendProof("ic 2.1 (p=>p)");
+			p.extendProof("repeat 2 (p=>p)");
+		}
 
 		/*public static void testnotMP() throws IllegalLineException, IllegalInferenceException {	
 			TheoremSet t = new TheoremSet();

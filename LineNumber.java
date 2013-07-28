@@ -1,8 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.org.apache.bcel.internal.generic.LASTORE;
-
 public class LineNumber {
 	private List<Integer> nums;
 	List<String> lines;

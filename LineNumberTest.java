@@ -25,4 +25,17 @@ public class LineNumberTest extends TestCase {
 		m.increment();
 		assertFalse(LineNumber.isLegal(n.toString(), m));
 	}
+	
+	public void testLineLevel() throws IllegalLineException {
+		LineNumber n = new LineNumber();
+		n.increment();
+		assertEquals(n.toString(), "2");
+		n.addPoint();
+		assertEquals(n.toString(), "2.1");
+		n.increment();
+		assertEquals(n.toString(), "2.2");
+		n.addPoint();
+		n.addPoint();
+		assertTrue(LineNumber.lineLevel(n.toString()) == 3);
+	}
 }
