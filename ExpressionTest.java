@@ -29,10 +29,20 @@ public class ExpressionTest extends TestCase {
 				"(((p=>q)=>q)=>((q=>p)=>p))",
 				"(~~p=>p)",
 				"(~~~a=>~a)",
-				"(~p=>(~q=>(~p&~q)))"
+				"(~p=>(~q=>(~p&~q)))",
+
+				"(~(q=>p))",
+				//"((a))",
+				//"(a)"
 		};
 		
 		String[] illegalStrings = {
+				"aa",
+				"a(",
+				"(a)",
+				"(p=>)",
+				"(p= >q)",
+				"(p=>p)(q=>q)",
 				"(p*q)",				
 				"~(r|s)=>(x|~y)"
 		};

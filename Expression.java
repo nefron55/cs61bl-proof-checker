@@ -15,11 +15,13 @@ public class Expression {
 	}	
 
 	private ExpNode expTreeHelper (String expr) throws IllegalLineException {
-	    if (expr.charAt (0) != '(') {
+		expr = expr.trim();
+		if (expr.isEmpty()) throw new IllegalLineException("expression is empty");
+		if (expr.contains(" ")) throw new IllegalLineException("expression contains spaces: " + expr);
+		if (expr.charAt (0) != '(') {
 	    	// if not parenthesized, the only possible legal inputs are:
-	    	// 1) a
-	    	// 2) ~a
-	    	// 3) ~(smth)
+	    	// 1) lower-case letter
+	    	// 2) "~" followed by legal expression
 	    	if (expr.length() == 1 && Character.isLetter(expr.charAt(0))) {
 	    		return new ExpNode(expr.substring(0,1));
 	    	} else if (expr.charAt(0) == '~') {
@@ -29,7 +31,24 @@ public class Expression {
 	    	}
 		} else {
 	        // expr is a parenthesized expression.
-	        // Strip off the beginning and ending parentheses,
+	        // strip off any extra enclosing parentheses TODO - should they be legal?
+			if (expr.startsWith("((") && expr.endsWith("))")) {
+				try {
+					return expTreeHelper(expr.substring(1, expr.length()-1));
+				} catch (IllegalLineException e) {
+					System.out.println("FAIL: " + e.getMessage());
+					System.out.println("When trying to parse " + expr.substring(1, expr.length()-1));
+					// move on and try to parse without stripping off enclosing parens
+				}
+			} 
+			// this is to try to find (~(p=>q)) - although not sure this is actually a legal exp
+			if (expr.startsWith("(~(") && expr.endsWith("))")) {
+				try {
+					return new ExpNode("~", null, expTreeHelper(expr.substring(2, expr.length()-1)));
+				} catch (IllegalLineException e) {
+					// move on and try to parse without stripping off enclosing parens  
+				}
+			}
 	        // find the main operator (an occurrence of &, |, or => 
 	    	// not nested in parentheses), and construct the two subtrees.
 	        int nesting = 0;
@@ -167,18 +186,17 @@ public class Expression {
 
 
 	static class ExpNode {
-		// TODO myItem should be String, not Object
 		public String myItem;
 		public ExpNode myLeft;
 		public ExpNode myRight;
 
-		public ExpNode (String obj) {
-			myItem = obj;
+		public ExpNode (String str) {
+			myItem = str;
 			myLeft = myRight = null;
 		}
 
-		public ExpNode (String obj, ExpNode left, ExpNode right) {
-			myItem = obj;
+		public ExpNode (String str, ExpNode left, ExpNode right) {
+			myItem = str;
 			myLeft = left;
 			myRight = right;
 		}

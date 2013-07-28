@@ -1,7 +1,55 @@
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
 
 
 public class ProofTest extends TestCase {
+	private static final String[] sampleProof1 = {
+		"show (q=>q)",
+		"assume q",
+		"ic 2 (q=>q)"
+	};
+	
+	private static final String[] sampleProof2 = {
+		"show (p=>(~p=>q))",
+		"assume p",
+		"show (~p=>q)",
+		"assume ~p",
+		"co 2 3.1 (~p=>q)",
+		"ic 3 (p=>(~p=>q))"
+	};
+	
+	public static final List<String[]> sampleProofs = new ArrayList<String[]>();
+	
+		public void testIsComplete() {
+			sampleProofs.add(sampleProof1);
+			sampleProofs.add(sampleProof2);
+			
+			for (String[] sampleProof : sampleProofs) {
+				Proof p = new Proof();
+				for (String line : sampleProof) {
+					try {
+						p.extendProof(line);
+					} catch (IllegalLineException e) {
+						fail(e.getMessage());
+						e.printStackTrace();
+					} catch (IllegalInferenceException e) {
+						fail(e.getMessage());
+						e.printStackTrace();
+					}
+				}
+				if (!p.isComplete()) fail("Incomplete");
+			}
+		}
+		
+		public void testFacts() {
+			
+		}
+		
+		public void testLineNumber() {
+			
+		}
 	
 		public static void testProofs() throws IllegalLineException, IllegalInferenceException {
 			/*TheoremSet t = new TheoremSet();

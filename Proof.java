@@ -8,6 +8,13 @@ public class Proof {
 	private boolean isDone = false;
 	private boolean isDebugging = true;
 
+	public Proof() {
+		ln = new LineNumber();
+		showing = new Stack<Expression>();
+		facts = new HashMap<String,Expression>();
+		printQueue = new LinkedList<String>();		
+	}
+	
 	public Proof (TheoremSet theorems) {
 		ln = new LineNumber();
 		showing = new Stack<Expression>();
