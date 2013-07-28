@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import junit.framework.TestCase;
 
 
@@ -5,40 +9,72 @@ public class ExpressionTest extends TestCase {
 
 	public void testExpression() {
 		boolean pass = true;
-		String[] testStrings = {
-				"a",
-				"(q=>q)",
-				"(p=>(~p=>q))",
-				"~a",
-				"~~a",
+		String[] legalStrings = {
 				"p",
+				"~a",
+				"~~p",
+				"~~~p",
+				"(q=>q)",
 				"(~p=>q)",
-				"(a=>~~a)",
-				"(p|q)",
-				"(((p=>q)=>q)=>((q=>p)=>p))",
+				"(p=>(~p=>q))",
 				"(p&q)",
-				"~(p&q)",
-				"~~(p&q)",
-				"(~~p=>p)",
+				"(p|q)",
+				
 				"((p=>q)&(r=>s))",
 				"((r|s)=>(x|~y))",
-				//"~(r|s)=>(x|~y)",
 				"(~(r|s)=>(x|~y))",
-				"((((r|s)=>(x|~y))&(~(r|s)=>(x|~y)))=>(x|~y))"
+				"((((r|s)=>(x|~y))&(~(r|s)=>(x|~y)))=>(x|~y))",
+				"((a=>b)=>((b=>c)=>(a=>c)))",
+				"(p=>((p=>q)=>q))",
+				"(((p=>q)=>q)=>((q=>p)=>p))",
+				"(~~p=>p)",
+				"(~~~a=>~a)",
+				"(~p=>(~q=>(~p&~q)))"
 		};
-		for (String testString : testStrings) {
+		
+		String[] illegalStrings = {
+				"(p*q)",				
+				"~(r|s)=>(x|~y)"
+		};
+		
+		int legalCount = legalStrings.length;
+		List<List<String>> testStrings = new ArrayList<List<String>>();
+		testStrings.add(new ArrayList<String> (Arrays.asList(legalStrings)));
+		(testStrings.get(0)).addAll(new ArrayList<String>(Arrays.asList(illegalStrings)));
+		
+		int failCount = 0;
+		
+		for (String testString : testStrings.get(0)) {
+			legalCount--;
 			try {
 				Expression exp = new Expression(testString);
-				System.out.println(exp.toInorderString() + " - GOOD");
-				exp.print();
+				if (legalCount >= 0) {
+					System.out.println(exp.toInorderString() + " - GOOD");
+					exp.print();					
+				} else {
+					System.out.println(exp.toInorderString() + " - BAD, " +
+							"Shouldn't be able to construct Expression from this string");
+					failCount++;
+					pass = false;					
+				}
 				System.out.println("------------------------------------------------");
 			} catch (IllegalLineException e) {
 				System.out.println(e.getMessage());
-				System.out.println(testString + " - BAD");
+				if (legalCount >= 0) {
+					System.out.println(testString + " - BAD");
+					System.out.println(e.getMessage());
+					failCount++;
+					pass = false;
+				} else {
+					System.out.println(testString + " - GOOD, Exception thrown as expected.");
+				}
+				
 				System.out.println("------------------------------------------------");
-				pass = false;
+				
 			}
 		}
+		System.out.println("LEGAL STRINGS: " + legalStrings.length + ". ILLEGAL STRINGS: " + illegalStrings.length + ".");
+		System.out.println("FAILS: " + failCount);
 		assertTrue(pass);
 	}
 	
