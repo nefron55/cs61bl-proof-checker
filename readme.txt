@@ -1,3 +1,9 @@
+0) We explored techniques for team collaboration, notably:
+-- all our code is hosted on github: https://github.com/ppolinsky/cs61bl-proof-checker
+    This made it much easier to keep track of the latest version of the code and for everyone to stay in sync.
+-- we used Skype and conference calls for communicating about our work
+-- we tried to plan and divide up work as much as possible
+
 1) There are three test classes in our project--LineNumberTest, ExpressionTest and ProofTest.
 
 ExpressionTest:

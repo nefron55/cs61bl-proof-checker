@@ -39,7 +39,6 @@ public class Expression {
 	        int nesting = 0;
 	        int opPos = 0; // operator position
 	        boolean isFollows = false;
-	        // TODO the loop below is missing error handling (like when there's no operator but there should be)
 	        for (int k=1; k<expr.length()-1; k++) {
 	            if (expr.charAt(k) == '(') { 
 	            	nesting++;
