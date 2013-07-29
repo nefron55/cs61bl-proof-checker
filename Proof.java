@@ -31,7 +31,7 @@ public class Proof {
 		//printAllFacts();
 		x = x.trim();
 		// is print?
-		if (x.equals("print")) {
+		if (x.equals("print") && x.length() == 5) {
 			for (int i = 0; i < printQueue.size(); i++){
 				System.out.print(ln.lines.get(i) + "\t");
 				System.out.println(printQueue.get(i));
@@ -43,8 +43,7 @@ public class Proof {
 			String[] parts = x.split(" ");
 			// LIST OF ALL LEGAL COMBOS:
 			// "show" exp
-			if (parts[0].equals("show") 
-					&& parts.length == 2) {
+			if (parts[0].equals("show")  && parts.length == 2) {
 				//		add exp to "showing" stack
 				//		add point to line number
 				showing.push(new Expression(parts[1]));
@@ -54,19 +53,22 @@ public class Proof {
 					ln.addPoint();
 				}
 			// "assume" exp
-			} else if (parts[0].equals("assume") 
-					&& parts.length == 2
+			} else if (parts[0].equals("assume") && parts.length == 2
 					&& (printQueue.getLast().trim().split(" ")[0].equals("show") ||
 							(printQueue.getLast().trim().split(" ")[0].equals("assume") && isDebugging))){
 				//		add exp to "facts" array (facts are assumptions, inferred results, theorems)
 				//		increment line number
-				facts.put(ln.toString(), new Expression(parts[1]));
-				ln.increment();
+				Expression e = new Expression(parts[1]);
+				if (isDebugging || (e.isNegation() && e.getMyRight().isEqual(showing.peek().getMyRoot())) ||
+						showing.peek().isFollows() && e.isLeftBranchOf(showing.peek())){
+					facts.put(ln.toString(), e);
+					ln.increment();
+				} else {
+					throw new IllegalLineException("Con ony assume negation of E or left side of implication E");
+				}
 
 			// "mp" ln1 ln2 exp
-			} else if (parts[0].equals("mp")
-					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
-					&& parts.length == 4) {
+			} else if (parts[0].equals("mp")  && parts.length == 4) {
 			//		check that ln1 is the left branch of ln2
 			//		check that exp is the right branch of ln2
 			//		if both true, 
@@ -79,8 +81,20 @@ public class Proof {
 				// TODO need to check these are legal line numbers to use in inference
 				// i.e. we're not outside their "domain" of validity
 				// TODO also need to handle failure case where fact with such number doesn't exist
-				Expression e1 = getFactByLineNumber(parts[1]);
-				Expression e1then2 = getFactByLineNumber(parts[2]);
+				//printAllFacts();
+				if  (!ln.isLegalReference(parts[1])){
+					throw new IllegalLineException("Cannot refer to line " + parts[1]);
+				} else if (!ln.isLegalReference(parts[2])){
+					throw new IllegalLineException("Cannot refer to line " + parts[2]);
+				}
+				Expression e1, e1then2;
+				if(getFactByLineNumber(parts[1]).toInorderString().length()  > getFactByLineNumber(parts[2]).toInorderString().length()){
+					e1then2 = getFactByLineNumber(parts[1]);
+					e1 = getFactByLineNumber(parts[2]);
+				} else {
+					e1then2 = getFactByLineNumber(parts[2]);
+					e1 = getFactByLineNumber(parts[1]);
+				}
 				Expression e2 = new Expression(parts[3]);
 				if (e1.isLeftBranchOf(e1then2) && e2.isRightBranchOf(e1then2)) {
 					this.completed(e2);
@@ -89,9 +103,13 @@ public class Proof {
 				}								
 
 			// "mt" ln1 ln2 exp
-			} else if (parts[0].equals("mt") && parts.length == 4
-					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)) {
-				// what you need for MT: p=>q and ~q gives you ~p
+			} else if (parts[0].equals("mt") && parts.length == 4) {
+				if (!ln.isLegalReference(parts[1])){
+					throw new IllegalLineException("Connot refer to line " + parts[1]);
+				} else if (!ln.isLegalReference(parts[2])){
+					throw new IllegalLineException("Cannot refer to line " + parts[2]);
+				}
+				//what you need for MT: p=>q and ~q gives you ~p
 				Expression part1 = getFactByLineNumber(parts[1]);
 				Expression part2 = getFactByLineNumber(parts[2]); 
 				Expression note2, e1then2;
@@ -104,7 +122,7 @@ public class Proof {
 				} else {
 					throw new IllegalInferenceException("Illegal Modus Tollens");
 				}
-				Expression note1 = new Expression(parts[3]); 
+				Expression note1 = new Expression(parts[3]);
 				if(note1.isNegation() 
 					&& note1.getMyRight().isEqual(e1then2.getMyLeft()) 
 					&& note2.getMyRight().isEqual(e1then2.getMyRight())) {
@@ -114,11 +132,12 @@ public class Proof {
 				}
 
 			// "co" ln1 ln2 exp
-			} else if (parts[0].equals("co")
-					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
-					&& parts.length == 4) {
-
-				// what you need for CO: E and ~E gives you anything
+			} else if (parts[0].equals("co") && parts.length == 4){
+					if (!ln.isLegalReference(parts[1])){
+						throw new IllegalLineException("Unable to refer to line " + parts[1]);
+					} else if (!ln.isLegalReference(parts[2])){
+						throw new IllegalLineException("Unable to refer to line " + parts[2]);
+					}
 				Expression e1 = getFactByLineNumber(parts[1]);
 				Expression e2 = getFactByLineNumber(parts[2]);
 				if ((e1.isNegation() && e2.isRightBranchOf(e1))
@@ -127,10 +146,11 @@ public class Proof {
 					this.completed(e);
 				} else {
 					throw new IllegalInferenceException("Illegal Contradiction");
-				}				
+				}
+				
+
 			// "ic" ln1 exp
-			} else if (parts[0].equals("ic") && parts.length == 3 
-					&& LineNumber.isLegal(parts[1], ln)) {
+			} else if (parts[0].equals("ic") && parts.length == 3) {
 				// 		check that ln1 is the right branch of exp
 				//		if true, 
 				//			add exp to "facts"
@@ -139,6 +159,9 @@ public class Proof {
 				//		else 
 				//			throw IllegalInferenceException
 				// 
+				if (!ln.isLegalReference(parts[1])){
+					throw new IllegalLineException("Unable to refer to line " + parts[1]);
+				}
 				Expression e = new Expression(parts[2]);
 				Expression factoid = getFactByLineNumber(parts[1]);
 				if (factoid.isRightBranchOf(e)) {
@@ -146,16 +169,20 @@ public class Proof {
 				} else {
 					throw new IllegalInferenceException("Illegal Implication");
 				}
+
+
 			// "repeat" ln1 exp
 			} else if (parts[0].equals("repeat")
-					&& LineNumber.isLegal(parts[1], ln) 
 					&& parts.length == 3 
 					//&& getFactByLineNumber(parts[1]).myRoot.equals("1")
 					) {
 				//cant access a line that begins with 'show'
 				// if expression given by line number in repeat statement is in facts, then show.pop and put it in facts again
 				//else illegal repeat statement
-				System.out.println(getFactByLineNumber(parts[1]).toInorderString());
+				//System.out.println(getFactByLineNumber(parts[1]).toInorderString());
+				if (!ln.isLegalReference(parts[1])){
+					throw new IllegalLineException("Unable to refer to line " + parts[1]);
+				}
 				if(//!showing.peek().equals(getFactByLineNumber(parts[1])) &&
 					 !parts[1].equals("1")
 						&& getFactByLineNumber(parts[1]).equals(new Expression(parts[2]))){
@@ -171,13 +198,13 @@ public class Proof {
 				Expression exp = facts.get(parts[0]);
 				Expression e = new Expression(parts[1]);
 				if (exp.isApplicable(e)){
-					facts.put(ln.toString(), e);
+					completed(e);					
 				} else {
 					throw new IllegalLineException("Line not compatible with theorem.");
 				}
 			} else {
 				for (int i = 0; i < parts.length; i++){
-					System.out.println(parts[i]);
+					//System.out.println(parts[i]);
 				}
 				throw new IllegalLineException("Wrong number of things");
 			}
@@ -191,14 +218,14 @@ public class Proof {
 			if (showing.isEmpty() && !ln.toString().equals("1")) {
 				isDone = true;
 			}
-			// FOR DEBUGGING:
-			System.out.println("isComplete? " + isDone + ". Things on showing stack:");
-			Stack<Expression> showCopy = new Stack<Expression>();
-			showCopy.addAll(showing);
-			while (!showCopy.isEmpty()) {
-				System.out.println(showCopy.pop().toInorderString());
-			}
-			// DONE PROCESSING USER INPUT, REST HAPPENS IN ProofChecker.main[]			
+//			// FOR DEBUGGING:
+//			System.out.println("isComplete? " + isDone + ". Things on showing stack:");
+//			Stack<Expression> showCopy = new Stack<Expression>();
+//			showCopy.addAll(showing);
+//			while (!showCopy.isEmpty()) {
+//				System.out.println(showCopy.pop().toInorderString());
+//			}
+//			// DONE PROCESSING USER INPUT, REST HAPPENS IN ProofChecker.main[]			
 		}
 	}
 
@@ -218,7 +245,7 @@ public class Proof {
 		return facts.get(ln);
 	}
 	
-	private void completed(Expression e) {
+	private void completed(Expression e) throws IllegalLineException {
 		facts.put(ln.toString(), e);
 		if (e.equals(showing.peek())){
 			showing.pop();
