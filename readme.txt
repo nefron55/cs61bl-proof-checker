@@ -38,4 +38,12 @@ of subproofs. This is used in extendProof to check, if upon the completion of a 
 
 ProofTest:
 ==========
+
+testIsComplete() initializes a series of sampleProofs which come from the spec. We forego the proof which creates error messages (see bottom)*.
+    It extendsProof line by line until the proof is complete.
+    
+testIsNegation() tests our method which checks if an expression is preceded by a "~". These tests make sure that expressions ~p and
+~(p=>q) are both made from strings to Expressions.
+
+
   
