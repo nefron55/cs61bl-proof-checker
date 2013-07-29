@@ -38,8 +38,12 @@ public class LineNumber {
 //		increment();
 //		}
 	
-	public void removePeriod() {
-		nums.remove(nums.size()-1);
+	public void removePeriod() throws IllegalLineException{
+		if(nums.size() > 1){
+			nums.remove(nums.size()-1);
+		} else {
+			throw new IllegalLineException("No period to remove");
+		}
 	}
 	
 	public void increment() {
@@ -52,7 +56,7 @@ public class LineNumber {
 		lines.add(toString());
 ;	}
 	
-	public static boolean isLegal(String str){
+	public static boolean isLegal(String str) throws IllegalLineException{
 		int i = 0; String s;
 		while (i < str.length()){
 			s = str.substring(i,i+1);
@@ -71,11 +75,23 @@ public class LineNumber {
 		return true;
 	}
 	
-	public static boolean isLegal(String str, LineNumber ln){
-		if (lineLevel(str) > lineLevel(ln.toString())){
-			return false;
+	public boolean isLegalReference(String str) throws IllegalLineException {
+		String current = this.toString();
+		int i = 0;
+		try {
+			while (i < str.length()-1){
+				if (str.charAt(i) != current.charAt(i)){
+					return false;
+				}
+				i++;
+			}
+			if (Integer.parseInt(str.substring(i)) > Integer.parseInt(current.substring(i,i+1))){
+				return false;
+			}
+			return true;
+		} catch (NumberFormatException e){
+			throw new IllegalLineException("Line format not valid.");
 		}
-		return true;
 	}
 	
 	public static int lineLevel (String str){
