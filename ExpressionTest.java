@@ -114,12 +114,6 @@ public class ExpressionTest extends TestCase {
 		
 	}
 	
-	// TESTS for ExpNode methods
-	
-	public void testReplaceLeaves() {
-		
-	}
-	
 	//testing theorem application
 	public void testIsApplicable() { 
 		String[] theorems = {
@@ -147,22 +141,6 @@ public class ExpressionTest extends TestCase {
 		}
 	}
 	
-	public void testIsLeftBranchOf() {
-		
-	}
-	
-	public void testIsRightBranchOf() {
-		
-	}
-	
-	public void testIsNegation() {
-		
-	}
-	
-	public void testIsFollows() {
-		
-	}
-	
 	private static final String[] expressions = {
 		"(a=>b)",
 		"(~~p=>p)", 
@@ -170,10 +148,76 @@ public class ExpressionTest extends TestCase {
 		"~(a|b)",
 		"(a|b)",
 		"(a&b)",
-		"a"
+		"a",
+		"~a"
 	};
 	
-	public void testGetMyRight() {
+	public void testReplaceLeaves() {
+		String[] replaced = {
+				"(p=>q)",
+				"(~~a=>a)",
+				"((a&b)=>a)",
+				"~(x|y)",
+				"(x|y)",
+				"(x&y)",
+				"x",
+				"~y"
+		};
+		for (int i=0; i<expressions.length; i++) {
+			try {
+				Expression exp1 = new Expression(expressions[i]);
+				Expression exp2 = new Expression(replaced[i]);
+				exp1 = exp1.replaceLeaves(exp2);
+				assertTrue(exp1.toInorderString().equals(exp2.toInorderString()));
+			} catch (IllegalLineException e) {
+				fail(e.getMessage());
+			}
+			
+		}
+		
+	}
+	
+	public void testIsNegation() {
+		// these are the strings in expressions[] that are negations
+		ArrayList<Integer> negations = new ArrayList<Integer>();
+		negations.add(3);
+		negations.add(7);
+		for (int i=0; i<expressions.length; i++) {
+			try {
+				Expression exp = new Expression(expressions[i]);
+				if (negations.contains(i)) {
+					assertTrue(exp.isNegation());
+				} else {
+					assertFalse(exp.isNegation());
+				}
+			} catch (IllegalLineException e) {
+				fail(e.getMessage());
+			}
+		}
+	}
+	
+	public void testIsFollows() {
+		// these are the indices of strings in expressions[] that are implications
+		ArrayList<Integer> implications = new ArrayList<Integer>();
+		implications.add(0);
+		implications.add(1);
+		implications.add(2);
+		for (int i=0; i<expressions.length; i++) {
+			try {
+				Expression exp = new Expression(expressions[i]);
+				if (implications.contains(i)) {
+					assertTrue(exp.isFollows());
+				} else {
+					assertFalse(exp.isFollows());
+				}
+			} catch (IllegalLineException e) {
+				fail(e.getMessage());
+			}
+		}
+		
+	}
+	
+	public void testGetMyRightAndIsRightBranchOf() {
 		String[] rights = {
 				"b",
 				"p",
@@ -181,7 +225,8 @@ public class ExpressionTest extends TestCase {
 				"(a|b)",
 				"b",
 				"b",
-				null
+				null,
+				"a"
 			};
 			
 			for (int i = 0; i < expressions.length; i++) {
@@ -195,6 +240,7 @@ public class ExpressionTest extends TestCase {
 					}
 					if (exp.getMyRight() != null) {
 						assertTrue(exp.getMyRight().isEqual(right.getMyRoot()));
+						assertTrue(right.isRightBranchOf(exp));
 					} else {
 						assertTrue(right == null);
 					}
@@ -204,37 +250,38 @@ public class ExpressionTest extends TestCase {
 			}		
 	}
 	
-	public void testGetMyLeft() {			
-			String[] lefts = {
+	public void testGetMyLeftAndIsLeftBranch() {			
+		String[] lefts = {
 				"a",
 				"~~p",
 				"(x&y)",
 				null,
 				"a",
 				"a",
+				null,
 				null
 			};
-			
-			for (int i = 0; i < expressions.length; i++) {
-				try {
-					Expression exp = new Expression(expressions[i]);
-					Expression left;
-					if (lefts[i] == null) {
-						left = null;
-					} else {
-						left = new Expression(lefts[i]);
-					}
-					if (exp.getMyLeft() != null) {
-						assertTrue(exp.getMyLeft().isEqual(left.getMyRoot()));
-					} else {
-						assertTrue(left == null);
-					}
-				} catch (IllegalLineException e) {
-					fail(e.getMessage());
+		for (int i = 0; i < expressions.length; i++) {
+			try {
+				Expression exp = new Expression(expressions[i]);
+				Expression left;
+				if (lefts[i] == null) {
+					left = null;
+				} else {
+					left = new Expression(lefts[i]);
 				}
+				if (exp.getMyLeft() != null) {
+					assertTrue(exp.getMyLeft().isEqual(left.getMyRoot()));
+					assertTrue(left.isLeftBranchOf(exp));
+				} else {
+					assertTrue(left == null);
+				}
+			} catch (IllegalLineException e) {
+				fail(e.getMessage());
 			}
+		}
 	}
-	
+		
 	public void testGetMyItem() {			
 		String[] roots = {
 				"=>",
@@ -243,7 +290,8 @@ public class ExpressionTest extends TestCase {
 				"~",
 				"|",
 				"&",
-				"a"
+				"a",
+				"~"
 			};
 			
 			for (int i = 0; i < expressions.length; i++) {
