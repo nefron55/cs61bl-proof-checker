@@ -44,7 +44,7 @@ public class Proof {
 			// LIST OF ALL LEGAL COMBOS:
 			// "show" exp
 			if (parts[0].equals("show") 
-					&& Expression.isLegal(parts[1]) && parts.length == 2) {
+					&& parts.length == 2) {
 				//		add exp to "showing" stack
 				//		add point to line number
 				showing.push(new Expression(parts[1]));
@@ -55,7 +55,7 @@ public class Proof {
 				}
 			// "assume" exp
 			} else if (parts[0].equals("assume") 
-					&& Expression.isLegal(parts[1]) && parts.length == 2
+					&& parts.length == 2
 					&& (printQueue.getLast().trim().split(" ")[0].equals("show") ||
 							(printQueue.getLast().trim().split(" ")[0].equals("assume") && isDebugging))){
 				//		add exp to "facts" array (facts are assumptions, inferred results, theorems)
@@ -66,7 +66,7 @@ public class Proof {
 			// "mp" ln1 ln2 exp
 			} else if (parts[0].equals("mp")
 					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
-					&& Expression.isLegal(parts[3]) && parts.length == 4) {
+					&& parts.length == 4) {
 			//		check that ln1 is the left branch of ln2
 			//		check that exp is the right branch of ln2
 			//		if both true, 
@@ -90,8 +90,7 @@ public class Proof {
 
 			// "mt" ln1 ln2 exp
 			} else if (parts[0].equals("mt") && parts.length == 4
-					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
-					&& Expression.isLegal(parts[3])) {
+					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)) {
 				// what you need for MT: p=>q and ~q gives you ~p
 				Expression part1 = getFactByLineNumber(parts[1]);
 				Expression part2 = getFactByLineNumber(parts[2]); 
@@ -117,7 +116,7 @@ public class Proof {
 			// "co" ln1 ln2 exp
 			} else if (parts[0].equals("co")
 					&& LineNumber.isLegal(parts[1], ln) && LineNumber.isLegal(parts[2], ln)
-					&& Expression.isLegal(parts[3]) && parts.length == 4) {
+					&& parts.length == 4) {
 
 				// what you need for CO: E and ~E gives you anything
 				Expression e1 = getFactByLineNumber(parts[1]);
@@ -128,13 +127,10 @@ public class Proof {
 					this.completed(e);
 				} else {
 					throw new IllegalInferenceException("Illegal Contradiction");
-				}
-				
-
+				}				
 			// "ic" ln1 exp
 			} else if (parts[0].equals("ic") && parts.length == 3 
-					&& LineNumber.isLegal(parts[1], ln) 
-					&& Expression.isLegal(parts[2])) {
+					&& LineNumber.isLegal(parts[1], ln)) {
 				// 		check that ln1 is the right branch of exp
 				//		if true, 
 				//			add exp to "facts"
@@ -150,12 +146,10 @@ public class Proof {
 				} else {
 					throw new IllegalInferenceException("Illegal Implication");
 				}
-
-
 			// "repeat" ln1 exp
 			} else if (parts[0].equals("repeat")
 					&& LineNumber.isLegal(parts[1], ln) 
-					&& Expression.isLegal(parts[2]) && parts.length == 3 
+					&& parts.length == 3 
 					//&& getFactByLineNumber(parts[1]).myRoot.equals("1")
 					) {
 				//cant access a line that begins with 'show'
@@ -173,7 +167,7 @@ public class Proof {
 				}
 					
 				// TODO
-			} else if (facts.containsKey(parts[0]) && Expression.isLegal(parts[1])){
+			} else if (facts.containsKey(parts[0])){
 				Expression exp = facts.get(parts[0]);
 				Expression e = new Expression(parts[1]);
 				if (exp.isApplicable(e)){

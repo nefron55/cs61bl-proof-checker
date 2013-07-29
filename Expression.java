@@ -1,11 +1,14 @@
 public class Expression {
-	public ExpNode myRoot;	
+	private static final String indent1 = "    ";
 
-	// not sure if this will be necessary
-	public Expression ( ) {
-		myRoot = null;
+	private ExpNode myRoot;	
+
+	public Expression (Object o) {
+		if (o == null) {
+			myRoot = null;
+		}
 	}
-
+	
 	public Expression (ExpNode t) {
 		myRoot = t;
 	}
@@ -31,24 +34,7 @@ public class Expression {
 	    	}
 		} else {
 	        // expr is a parenthesized expression.
-	        // strip off any extra enclosing parentheses TODO - should they be legal?
-			if (expr.startsWith("((") && expr.endsWith("))")) {
-				try {
-					return expTreeHelper(expr.substring(1, expr.length()-1));
-				} catch (IllegalLineException e) {
-					System.out.println("FAIL: " + e.getMessage());
-					System.out.println("When trying to parse " + expr.substring(1, expr.length()-1));
-					// move on and try to parse without stripping off enclosing parens
-				}
-			} 
-			// this is to try to find (~(p=>q)) - although not sure this is actually a legal exp
-			if (expr.startsWith("(~(") && expr.endsWith("))")) {
-				try {
-					return new ExpNode("~", null, expTreeHelper(expr.substring(2, expr.length()-1)));
-				} catch (IllegalLineException e) {
-					// move on and try to parse without stripping off enclosing parens  
-				}
-			}
+
 	        // find the main operator (an occurrence of &, |, or => 
 	    	// not nested in parentheses), and construct the two subtrees.
 	        int nesting = 0;
@@ -86,22 +72,6 @@ public class Expression {
 	    }
 	}	
 
-
-	// Print the values in the tree in preorder: root value first,
-	// then values in the left subtree (in preorder), then values
-	// in the right subtree (in preorder).
-	public String toPreorderString( ) {
-		return toPreorderString (myRoot);
-	}
-
-	private static String toPreorderString (ExpNode t) {
-		if (t != null) {
-			return t.myItem + " " + toPreorderString(t.myLeft) + toPreorderString(t.myRight);
-		} else {
-			return "";
-		}
-	}
-
 	// Print the values in the tree in inorder: values in the left
 	// subtree first (in inorder), then the root value, then values
 	// in the right subtree (in inorder).
@@ -125,51 +95,11 @@ public class Expression {
 		return this.toInorderString().equals(e.toInorderString());
 	}
 
-//	public void fillSampleTree1 ( ) {
-//		myRoot =
-//		    new TreeNode ("a",
-//			new TreeNode ("b"),
-//			new TreeNode ("c"));
-//	}
-
-	public static int height(ExpNode n) {
-		if (n == null) {
-			return 0;
-		} else if (n.isLeaf()) {
-			return 1;
-        } else {
-            return Math.max(height(n.myLeft), height(n.myRight)) + 1;
-        }
-	}
-
-	public boolean isCompletelyBalanced() {
-		if (myRoot == null) {
-			return true;
-		} else {
-			return isCompletelyBalancedHelper(myRoot);
-		}
-	}
-
-	private boolean isCompletelyBalancedHelper(ExpNode n) {
-		if (n.myLeft == null && n.myRight == null) {
-			return true;
-		} else if ((n.myLeft == null && n.myRight != null) ||
-					(n.myLeft != null && n.myRight == null)) {
-			return false;
-		} else {
-			return (isCompletelyBalancedHelper(n.myLeft) 
-					&& isCompletelyBalancedHelper(n.myRight));
-		}
-
-	}
-
 	public void print ( ) {
 	    if (myRoot != null) {
 	        printHelper (myRoot, 0);
 	    }
 	}
-
-	private static final String indent1 = "    ";
 
 	private static void printHelper (ExpNode root, int indent) {
 	    if (root.myRight != null) printHelper (root.myRight, indent+1) ;
@@ -182,53 +112,6 @@ public class Expression {
 	        System.out.print (indent1);
 	    }
 	    System.out.println (obj);
-	}
-
-
-	static class ExpNode {
-		public String myItem;
-		public ExpNode myLeft;
-		public ExpNode myRight;
-
-		public ExpNode (String str) {
-			myItem = str;
-			myLeft = myRight = null;
-		}
-
-		public ExpNode (String str, ExpNode left, ExpNode right) {
-			myItem = str;
-			myLeft = left;
-			myRight = right;
-		}
-
-		public boolean isLeaf() {
-			if (myLeft == null && myRight == null) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		public boolean isEqual(ExpNode tn) {
-			if (!this.myItem.equals(tn.myItem)) {
-				return false;
-			} else if (this.myRight == null && tn.myRight == null && this.myLeft == null && tn.myRight == null){
-				return true;
-			} else if (this.myRight != null && tn.myRight != null && !this.myRight.isEqual(tn.myRight)) {
-				return false;
-			} else if (this.myLeft != null && tn.myLeft != null && !this.myLeft.isEqual(tn.myLeft)) {
-				return false;
-			} else {
-				return true;
-			}
-		}
-
-	}
-
-
-	public static boolean isLegal(String string) {
-		// TODO OR NOTTODO Auto-generated method stub
-		return true;		
 	}
 	
 	public Expression replaceLeaves(Expression input) throws IllegalLineException{
@@ -289,5 +172,48 @@ public class Expression {
 	public String getMyItem() {
 		return this.myRoot.myItem;
 	}
+	
+	public ExpNode getMyRoot() {
+		return myRoot;
+	}
 
+	static class ExpNode {
+		public String myItem;
+		public ExpNode myLeft;
+		public ExpNode myRight;
+
+		public ExpNode (String str) {
+			myItem = str;
+			myLeft = myRight = null;
+		}
+
+		public ExpNode (String str, ExpNode left, ExpNode right) {
+			myItem = str;
+			myLeft = left;
+			myRight = right;
+		}
+
+		public boolean isLeaf() {
+			if (myLeft == null && myRight == null) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		public boolean isEqual(ExpNode tn) {
+			if (!this.myItem.equals(tn.myItem)) {
+				return false;
+			} else if (this.myRight == null && tn.myRight == null && this.myLeft == null && tn.myRight == null){
+				return true;
+			} else if (this.myRight != null && tn.myRight != null && !this.myRight.isEqual(tn.myRight)) {
+				return false;
+			} else if (this.myLeft != null && tn.myLeft != null && !this.myLeft.isEqual(tn.myLeft)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+	}
 }

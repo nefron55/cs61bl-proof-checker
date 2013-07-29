@@ -7,45 +7,59 @@ import junit.framework.TestCase;
 
 public class ExpressionTest extends TestCase {
 
+	private static final String[] legalStrings = {
+			"p",
+			"~a",
+			"~~p",
+			"~~~p",
+			"~(p=>q)",
+			"(p|q)",
+			"~(p|q)",
+			"~~(p=>q)",
+			"(q=>q)",
+			"(~p=>q)",
+			"(p=>(~p=>q))",
+			"(p&q)",
+			
+			"((p=>q)&(r=>s))",
+			"((r|s)=>(x|~y))",
+			"(~(r|s)=>(x|~y))",
+			"((((r|s)=>(x|~y))&(~(r|s)=>(x|~y)))=>(x|~y))",
+			"((a=>b)=>((b=>c)=>(a=>c)))",
+			"(p=>((p=>q)=>q))",
+			"(((p=>q)=>q)=>((q=>p)=>p))",
+			"(~~p=>p)",
+			"(~~~a=>~a)",
+			"(~p=>(~q=>(~p&~q)))",
+			"~(~(p=>q)=>(a=>b))",
+			"(~(~(p|q)&~(p=>q))&~q)"
+			
+	};
+	
+	private static final String[] illegalStrings = {
+			"",
+			"&",
+			"1",
+			"(a|3)",
+			"a|b",
+			"(~a)",
+			"aa",
+			"a(",
+			"(a)",
+			"(~(q=>p))",
+			"((a))",
+			"(p=>)",
+			"(p= >q)",
+			"(p=>p)(q=>q)",
+			"(p*q)",				
+			"~(r|s)=>(x|~y)",
+			"~(~(p|q)&~(p=>q))&~q"
+	};
+	
+	// Tests constructing expression from a String
 	public void testExpression() {
 		boolean pass = true;
-		String[] legalStrings = {
-				"p",
-				"~a",
-				"~~p",
-				"~~~p",
-				"(q=>q)",
-				"(~p=>q)",
-				"(p=>(~p=>q))",
-				"(p&q)",
-				"(p|q)",
-				
-				"((p=>q)&(r=>s))",
-				"((r|s)=>(x|~y))",
-				"(~(r|s)=>(x|~y))",
-				"((((r|s)=>(x|~y))&(~(r|s)=>(x|~y)))=>(x|~y))",
-				"((a=>b)=>((b=>c)=>(a=>c)))",
-				"(p=>((p=>q)=>q))",
-				"(((p=>q)=>q)=>((q=>p)=>p))",
-				"(~~p=>p)",
-				"(~~~a=>~a)",
-				"(~p=>(~q=>(~p&~q)))",
 
-				"(~(q=>p))",
-				//"((a))",
-				//"(a)"
-		};
-		
-		String[] illegalStrings = {
-				"aa",
-				"a(",
-				"(a)",
-				"(p=>)",
-				"(p= >q)",
-				"(p=>p)(q=>q)",
-				"(p*q)",				
-				"~(r|s)=>(x|~y)"
-		};
 		
 		int legalCount = legalStrings.length;
 		List<List<String>> testStrings = new ArrayList<List<String>>();
@@ -88,22 +102,158 @@ public class ExpressionTest extends TestCase {
 		assertTrue(pass);
 	}
 	
-	public void testIsApplicable() throws IllegalLineException{ //testing theorem application
-		Expression exp = new Expression("(~~p=>p)"); //testing double negative theorem
-		Expression test = new Expression("(~~(p=>q)=>(p=>q))");
-		assertTrue(exp.isApplicable(test));
-		
-		exp = new Expression("((x&y)=>x)"); //testing and1 theorem
-		test = new Expression("(((a|b)&~c)=>(a|b))");
-		assertTrue(exp.isApplicable(test));
-		
-		exp = new Expression("(a=>(b=>(a&b)))"); //testing buildAnd theorem
-		test = new Expression("(~p=>(~q=>(~p&~q)))");
-		assertTrue(exp.isApplicable(test));
-		
-		exp = new Expression("((~a&~b)=>~(a|b))"); //testing demorgan2
-		test = new Expression("((~p&~q)=>~(p|q))");
-		assertTrue(exp.isApplicable(test));
+	public void testToInorderString() {
+		for (String string : legalStrings) {
+			try {
+				Expression exp = new Expression(string);
+				assertTrue(exp.toInorderString().equals(string));
+			} catch (IllegalLineException e) {
+				fail(e.getMessage());
+			}
+		}
 		
 	}
+	
+	// TESTS for ExpNode methods
+	
+	public void testReplaceLeaves() {
+		
+	}
+	
+	//testing theorem application
+	public void testIsApplicable() { 
+		String[] theorems = {
+			"(~~p=>p)", //testing double negative theorem
+			"((x&y)=>x)", //testing and1 theorem
+			"(a=>(b=>(a&b)))", //testing buildAnd theorem
+			"((~a&~b)=>~(a|b))" //testing demorgan2
+		};
+		
+		String[] matchingExps = {
+			"(~~(p=>q)=>(p=>q))",
+			"(((a|b)&~c)=>(a|b))",
+			"(~p=>(~q=>(~p&~q)))",
+			"((~p&~q)=>~(p|q))"
+		};
+		
+		for (int i = 0; i < theorems.length; i++) {
+			try {
+				Expression thm = new Expression(theorems[i]);
+				Expression exp = new Expression(matchingExps[i]);
+				assertTrue(thm.isApplicable(exp));
+			} catch (IllegalLineException e) {
+				fail(e.getMessage());
+			}
+		}
+	}
+	
+	public void testIsLeftBranchOf() {
+		
+	}
+	
+	public void testIsRightBranchOf() {
+		
+	}
+	
+	public void testIsNegation() {
+		
+	}
+	
+	public void testIsFollows() {
+		
+	}
+	
+	private static final String[] expressions = {
+		"(a=>b)",
+		"(~~p=>p)", 
+		"((x&y)=>x)",
+		"~(a|b)",
+		"(a|b)",
+		"(a&b)",
+		"a"
+	};
+	
+	public void testGetMyRight() {
+		String[] rights = {
+				"b",
+				"p",
+				"x",
+				"(a|b)",
+				"b",
+				"b",
+				null
+			};
+			
+			for (int i = 0; i < expressions.length; i++) {
+				try {
+					Expression exp = new Expression(expressions[i]);
+					Expression right;
+					if (rights[i] == null) {
+						right = null;
+					} else {
+						right = new Expression(rights[i]);
+					}
+					if (exp.getMyRight() != null) {
+						assertTrue(exp.getMyRight().isEqual(right.getMyRoot()));
+					} else {
+						assertTrue(right == null);
+					}
+				} catch (IllegalLineException e) {
+					fail(e.getMessage());
+				}
+			}		
+	}
+	
+	public void testGetMyLeft() {			
+			String[] lefts = {
+				"a",
+				"~~p",
+				"(x&y)",
+				null,
+				"a",
+				"a",
+				null
+			};
+			
+			for (int i = 0; i < expressions.length; i++) {
+				try {
+					Expression exp = new Expression(expressions[i]);
+					Expression left;
+					if (lefts[i] == null) {
+						left = null;
+					} else {
+						left = new Expression(lefts[i]);
+					}
+					if (exp.getMyLeft() != null) {
+						assertTrue(exp.getMyLeft().isEqual(left.getMyRoot()));
+					} else {
+						assertTrue(left == null);
+					}
+				} catch (IllegalLineException e) {
+					fail(e.getMessage());
+				}
+			}
+	}
+	
+	public void testGetMyItem() {			
+		String[] roots = {
+				"=>",
+				"=>",
+				"=>",
+				"~",
+				"|",
+				"&",
+				"a"
+			};
+			
+			for (int i = 0; i < expressions.length; i++) {
+				try {
+					Expression exp = new Expression(expressions[i]);
+					assertTrue(exp.getMyItem().equals(roots[i]));
+				} catch (IllegalLineException e) {
+					fail(e.getMessage());
+				}
+			}
+	}
+		
 }
