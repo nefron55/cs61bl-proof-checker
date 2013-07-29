@@ -34,7 +34,6 @@ public class Expression {
 	    	}
 		} else {
 	        // expr is a parenthesized expression.
-
 	        // find the main operator (an occurrence of &, |, or => 
 	    	// not nested in parentheses), and construct the two subtrees.
 	        int nesting = 0;
