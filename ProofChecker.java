@@ -64,6 +64,9 @@ public class ProofChecker {
                     System.err.println ("Not enough lines in the proof");
                     System.exit (1);
                 }
+                if (line.equals("")){
+                    continue;
+                }
                 soFar.extendProof (line);
                 done = soFar.isComplete ( );
             } catch (IllegalLineException e) {
