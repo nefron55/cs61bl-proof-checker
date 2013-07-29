@@ -6,7 +6,7 @@ public class Proof {
 	private HashMap<String,Expression> facts; // changed key to String (allows for names) LineNumber.toString() should be called when adding to HashMaps
 	private LinkedList<String> printQueue;
 	private boolean isDone = false;
-	private boolean isDebugging = true;
+	private boolean isDebugging = false;
 
 	public Proof() {
 		ln = new LineNumber();
@@ -20,6 +20,10 @@ public class Proof {
 		showing = new Stack<Expression>();
 		facts = theorems.transfer();
 		printQueue = new LinkedList<String>();
+	}
+	
+	public void startDebugging(){
+		isDebugging = true;
 	}
 
 	public LineNumber nextLineNumber(){
@@ -58,14 +62,7 @@ public class Proof {
 							(printQueue.getLast().trim().split(" ")[0].equals("assume") && isDebugging))){
 				//		add exp to "facts" array (facts are assumptions, inferred results, theorems)
 				//		increment line number
-				Expression e = new Expression(parts[1]);
-				if (isDebugging || (e.isNegation() && e.getMyRight().isEqual(showing.peek().getMyRoot())) ||
-						showing.peek().isFollows() && e.isLeftBranchOf(showing.peek())){
-					facts.put(ln.toString(), e);
-					ln.increment();
-				} else {
-					throw new IllegalLineException("Con ony assume negation of E or left side of implication E");
-				}
+				doAssume(parts);
 
 			// "mp" ln1 ln2 exp
 			} else if (parts[0].equals("mp")  && parts.length == 4) {
@@ -78,29 +75,13 @@ public class Proof {
 			//		else 
 			//			throw IllegalInferenceException
 			//			
-				// TODO need to check these are legal line numbers to use in inference
-				// i.e. we're not outside their "domain" of validity
-				// TODO also need to handle failure case where fact with such number doesn't exist
-				//printAllFacts();
 				if  (!ln.isLegalReference(parts[1])){
 					throw new IllegalLineException("Cannot refer to line " + parts[1]);
 				} else if (!ln.isLegalReference(parts[2])){
 					throw new IllegalLineException("Cannot refer to line " + parts[2]);
 				}
-				Expression e1, e1then2;
-				if(getFactByLineNumber(parts[1]).toInorderString().length()  > getFactByLineNumber(parts[2]).toInorderString().length()){
-					e1then2 = getFactByLineNumber(parts[1]);
-					e1 = getFactByLineNumber(parts[2]);
-				} else {
-					e1then2 = getFactByLineNumber(parts[2]);
-					e1 = getFactByLineNumber(parts[1]);
-				}
-				Expression e2 = new Expression(parts[3]);
-				if (e1.isLeftBranchOf(e1then2) && e2.isRightBranchOf(e1then2)) {
-					this.completed(e2);
-				} else {
-					throw new IllegalInferenceException("Illegal Modus Ponens");
-				}								
+				
+				doMP(parts);
 
 			// "mt" ln1 ln2 exp
 			} else if (parts[0].equals("mt") && parts.length == 4) {
@@ -109,27 +90,8 @@ public class Proof {
 				} else if (!ln.isLegalReference(parts[2])){
 					throw new IllegalLineException("Cannot refer to line " + parts[2]);
 				}
-				//what you need for MT: p=>q and ~q gives you ~p
-				Expression part1 = getFactByLineNumber(parts[1]);
-				Expression part2 = getFactByLineNumber(parts[2]); 
-				Expression note2, e1then2;
-				if (part1.isNegation() && part2.isFollows()) {
-					note2 = part1;
-					e1then2 = part2;
-				} else if (part1.isFollows() && part2.isNegation()) {
-					note2 = part2;
-					e1then2 = part1;
-				} else {
-					throw new IllegalInferenceException("Illegal Modus Tollens");
-				}
-				Expression note1 = new Expression(parts[3]);
-				if(note1.isNegation() 
-					&& note1.getMyRight().isEqual(e1then2.getMyLeft()) 
-					&& note2.getMyRight().isEqual(e1then2.getMyRight())) {
-						this.completed(note1);
-				} else {
-					throw new IllegalInferenceException("Illegal Modus Tollens");
-				}
+				
+				doMT(parts);
 
 			// "co" ln1 ln2 exp
 			} else if (parts[0].equals("co") && parts.length == 4){
@@ -138,15 +100,8 @@ public class Proof {
 					} else if (!ln.isLegalReference(parts[2])){
 						throw new IllegalLineException("Unable to refer to line " + parts[2]);
 					}
-				Expression e1 = getFactByLineNumber(parts[1]);
-				Expression e2 = getFactByLineNumber(parts[2]);
-				if ((e1.isNegation() && e2.isRightBranchOf(e1))
-						|| (e2.isNegation() && e1.isRightBranchOf(e2))) {
-					Expression e = new Expression(parts[3]);
-					this.completed(e);
-				} else {
-					throw new IllegalInferenceException("Illegal Contradiction");
-				}
+					
+					doCO(parts);
 				
 
 			// "ic" ln1 exp
@@ -162,38 +117,22 @@ public class Proof {
 				if (!ln.isLegalReference(parts[1])){
 					throw new IllegalLineException("Unable to refer to line " + parts[1]);
 				}
-				Expression e = new Expression(parts[2]);
-				Expression factoid = getFactByLineNumber(parts[1]);
-				if (factoid.isRightBranchOf(e)) {
-					this.completed(e);
-				} else {
-					throw new IllegalInferenceException("Illegal Implication");
-				}
-
+				doIC(parts);
 
 			// "repeat" ln1 exp
 			} else if (parts[0].equals("repeat")
 					&& parts.length == 3 
 					//&& getFactByLineNumber(parts[1]).myRoot.equals("1")
 					) {
-				//cant access a line that begins with 'show'
-				// if expression given by line number in repeat statement is in facts, then show.pop and put it in facts again
+				//cant access a line that begins with 'show' that hasn't been completed yet
+				// if expression given by line number in repeat statement is in facts, then show.pop
+				//and put it in facts again
 				//else illegal repeat statement
-				//System.out.println(getFactByLineNumber(parts[1]).toInorderString());
 				if (!ln.isLegalReference(parts[1])){
 					throw new IllegalLineException("Unable to refer to line " + parts[1]);
 				}
-				if(//!showing.peek().equals(getFactByLineNumber(parts[1])) &&
-					 !parts[1].equals("1")
-						&& getFactByLineNumber(parts[1]).equals(new Expression(parts[2]))){
-					Expression e = new Expression(parts[2]);
-					facts.put(ln.toString(), e);
-					showing.pop();
-				} else {
-					throw new IllegalInferenceException("Illegal Repeat Statement");
-				}
-					
-				// TODO
+				doRepeat(parts);
+	
 			} else if (facts.containsKey(parts[0])){
 				Expression exp = facts.get(parts[0]);
 				Expression e = new Expression(parts[1]);
@@ -203,9 +142,6 @@ public class Proof {
 					throw new IllegalLineException("Line not compatible with theorem.");
 				}
 			} else {
-				for (int i = 0; i < parts.length; i++){
-					//System.out.println(parts[i]);
-				}
 				throw new IllegalLineException("Wrong number of things");
 			}
 
@@ -218,14 +154,100 @@ public class Proof {
 			if (showing.isEmpty() && !ln.toString().equals("1")) {
 				isDone = true;
 			}
-//			// FOR DEBUGGING:
-//			System.out.println("isComplete? " + isDone + ". Things on showing stack:");
-//			Stack<Expression> showCopy = new Stack<Expression>();
-//			showCopy.addAll(showing);
-//			while (!showCopy.isEmpty()) {
-//				System.out.println(showCopy.pop().toInorderString());
-//			}
-//			// DONE PROCESSING USER INPUT, REST HAPPENS IN ProofChecker.main[]			
+			
+			if (isDebugging){
+				System.out.println("isComplete? " + isDone + ". Things on showing stack:");
+				Stack<Expression> showCopy = new Stack<Expression>();
+				showCopy.addAll(showing);
+				while (!showCopy.isEmpty()) {
+					System.out.println(showCopy.pop().toInorderString());
+				}
+			}
+			// DONE PROCESSING USER INPUT, REST HAPPENS IN ProofChecker.main[]	
+			
+		}
+	}
+	
+	private void doMP(String [] parts) throws IllegalLineException, IllegalInferenceException{
+		Expression e1, e1then2;
+		if(getFactByLineNumber(parts[1]).toInorderString().length()  > getFactByLineNumber(parts[2]).toInorderString().length()){
+			e1then2 = getFactByLineNumber(parts[1]);
+			e1 = getFactByLineNumber(parts[2]);
+		} else {
+			e1then2 = getFactByLineNumber(parts[2]);
+			e1 = getFactByLineNumber(parts[1]);
+		}
+		Expression e2 = new Expression(parts[3]);
+		if (e1.isLeftBranchOf(e1then2) && e2.isRightBranchOf(e1then2)) {
+			this.completed(e2);
+		} else {
+			throw new IllegalInferenceException("Illegal Modus Ponens");
+		}
+	}
+	
+	private void doMT(String[] parts) throws IllegalLineException, IllegalInferenceException {
+		Expression part1 = getFactByLineNumber(parts[1]);
+		Expression part2 = getFactByLineNumber(parts[2]); 
+		Expression note2, e1then2;
+		if (part1.isNegation() && part2.isFollows()) {
+			note2 = part1;
+			e1then2 = part2;
+		} else if (part1.isFollows() && part2.isNegation()) {
+			note2 = part2;
+			e1then2 = part1;
+		} else {
+			throw new IllegalInferenceException("Illegal Modus Tollens");
+		}
+		Expression note1 = new Expression(parts[3]);
+		if(note1.isNegation() 
+			&& note1.getMyRight().isEqual(e1then2.getMyLeft()) 
+			&& note2.getMyRight().isEqual(e1then2.getMyRight())) {
+				this.completed(note1);
+		} else {
+			throw new IllegalInferenceException("Illegal Modus Tollens");
+		}
+	}
+	
+	private void doIC(String[] parts) throws IllegalLineException, IllegalInferenceException{
+		Expression e = new Expression(parts[2]);
+		Expression factoid = getFactByLineNumber(parts[1]);
+		if (factoid.isRightBranchOf(e)) {
+			this.completed(e);
+		} else {
+			throw new IllegalInferenceException("Illegal Implication");
+		}
+	}
+	
+	private void doCO(String[] parts) throws IllegalLineException, IllegalInferenceException{
+		Expression e1 = getFactByLineNumber(parts[1]);
+		Expression e2 = getFactByLineNumber(parts[2]);
+		if ((e1.isNegation() && e2.isRightBranchOf(e1))
+				|| (e2.isNegation() && e1.isRightBranchOf(e2))) {
+			Expression e = new Expression(parts[3]);
+			this.completed(e);
+		} else {
+			throw new IllegalInferenceException("Illegal Contradiction");
+		}
+	}
+	private void doAssume(String[] parts) throws IllegalLineException, IllegalInferenceException{
+		Expression e = new Expression(parts[1]);
+		if (isDebugging || (e.isNegation() && e.getMyRight().isEqual(showing.peek().getMyRoot())) ||
+				showing.peek().isFollows() && e.isLeftBranchOf(showing.peek())){
+			facts.put(ln.toString(), e);
+			ln.increment();
+		} else {
+			throw new IllegalLineException("Con only assume ~E or the left side of implication E.");
+		}
+	}
+	
+	private void doRepeat(String[] parts) throws IllegalLineException, IllegalInferenceException{
+		if(!parts[1].equals("1")
+				&& getFactByLineNumber(parts[1]).equals(new Expression(parts[2]))){
+			Expression e = new Expression(parts[2]);
+			facts.put(ln.toString(), e);
+			showing.pop();
+		} else {
+			throw new IllegalInferenceException("Illegal Repeat Statement");
 		}
 	}
 
