@@ -45,6 +45,33 @@ public class ProofTest extends TestCase {
 		"co 2 3.1 p", //3.2
 		"ic 3 (~~p=>p)", //4
 	};
+	
+	private static final String[] sampleProof5 = {
+		"show ((a=>(b=>c))=>((a=>b)=>(a=>c)))",
+		"assume (a=>(b=>c))",
+		"show ((a=>b)=>(a=>c))",
+		"assume (a=>b)",
+		"show (a=>c)",
+		"assume a",
+		"mp 2 3.2.1 (b=>c)",
+		"mp 3.2.1 3.1 b",
+		"mp 3.2.3 3.2.2 c",
+		"ic 3.2.4 (a=>c)",
+		"ic 3.2 ((a=>b)=>(a=>c))",
+		"ic 3 ((a=>(b=>c))=>((a=>b)=>(a=>c)))"
+	};
+	
+	private static final String[] sampleProof6 = {
+		"show (p=>((p=>q)=>q))",
+		"assume p",
+		"show ((p=>q)=>q)",
+		"assume (p=>q)",
+		"show q",
+		"mp 2 3.1 q",
+		"ic 3.2 ((p=>q)=>q)",
+		"ic 3 (p=>((p=>q)=>q))"
+	};
+	
 	public static final List<String[]> sampleProofs = new ArrayList<String[]>();
 	
 		public void testIsComplete() {
@@ -52,14 +79,15 @@ public class ProofTest extends TestCase {
 			sampleProofs.add(sampleProof2);
 			sampleProofs.add(sampleProof3);
 			sampleProofs.add(sampleProof4);
+			sampleProofs.add(sampleProof5);
+			sampleProofs.add(sampleProof6);
 			
 			for (String[] sampleProof : sampleProofs) {
 				Proof p = new Proof();
 				for (String line : sampleProof) {
 					try {
-						System.out.println(p.getLine() + " - extending proof with: " + line);
+						//System.out.println(p.getLine() + " - extending proof with: " + line);
 						p.extendProof(line);
-						p.printAllFacts();
 					} catch (IllegalLineException e) {
 						fail(e.getMessage());
 						e.printStackTrace();
@@ -104,6 +132,7 @@ public class ProofTest extends TestCase {
 			assertTrue(e3.isFollows());
 		}
 	
+
 		public static void testProofs() throws IllegalLineException, IllegalInferenceException {
 			/*TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
@@ -113,6 +142,7 @@ public class ProofTest extends TestCase {
 		public static void testPrint() throws IllegalLineException, IllegalInferenceException {
 			TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
+			p.startDebugging();
 			p.extendProof("show (p=>q)");
 			p.extendProof("assume a");
 			p.extendProof("assume b");
@@ -126,24 +156,28 @@ public class ProofTest extends TestCase {
 		public static void testMP() throws IllegalLineException, IllegalInferenceException {
 			TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
+			p.startDebugging();
 			p.extendProof("show q");
 			p.extendProof("assume p");
 			p.extendProof("assume (p=>q)");
 			p.extendProof("mp 2 3 q");
 			
 			Proof p2 = new Proof(t);
+			p2.startDebugging();
 			p2.extendProof("show (q=>p)");
 			p2.extendProof("assume (p=>q)");
 			p2.extendProof("assume ((p=>q)=>(q=>p))");
 			p2.extendProof("mp 2 3 (q=>p)");
 			
 			Proof p3 = new Proof(t);
+			p3.startDebugging();
 			p3.extendProof("show ~(q=>p)");
 			p3.extendProof("assume ~(p=>q)");
 			p3.extendProof("assume (~(p=>q)=>~(q=>p))");
 			p3.extendProof("mp 2 3 ~(q=>p)");
 			
 			Proof p4 = new Proof(t);
+			p4.startDebugging();
 			p4.extendProof("show (~(p=>q)=>~(k=>l))");
 			p4.extendProof("assume ((p=>q)=>(k=>l))");
 			p4.extendProof("assume (((p=>q)=>(k=>l))=>(~(p=>q)=>~(k=>l)))");
@@ -153,18 +187,21 @@ public class ProofTest extends TestCase {
 		public static void testMT() throws IllegalLineException, IllegalInferenceException {
 			TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
+			p.startDebugging();
 			p.extendProof("show ~p");
 			p.extendProof("assume ~q");
 			p.extendProof("assume (p=>q)");
 			p.extendProof("mt 2 3 ~p");
 			
 			Proof p2 = new Proof(t);
+			p2.startDebugging();
 			p2.extendProof("show ~(p=>q)");
 			p2.extendProof("assume ~(q=>p)");
 			p2.extendProof("assume ((p=>q)=>(q=>p))");
 			p2.extendProof("mt 2 3 ~(p=>q)");
 			
 			Proof p4 = new Proof(t);
+			p4.startDebugging();
 			p4.extendProof("show ~((p=>q)=>(q=>r))");
 			p4.extendProof("assume ~((a=>b)=>(b=>c))");
 			p4.extendProof("assume (((p=>q)=>(q=>r))=>((a=>b)=>(b=>c)))");
@@ -172,25 +209,25 @@ public class ProofTest extends TestCase {
 		}
 		
 		public static void testIC() throws IllegalLineException, IllegalInferenceException {
-			System.out.println("-------------------------------");
-
+			//System.out.println("-------------------------------");
+			
 			TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
+			p.startDebugging();
 			p.extendProof("show (p=>q)");
 			p.extendProof("assume q");
 			p.extendProof("ic 2 (p=>q)");
-			p.printAllFacts();
 			
 			p = new Proof(t);
+			p.startDebugging();
 			p.extendProof("show (~(p=>q)=>(p=>q))");
 			p.extendProof("assume (p=>q)");
 			p.extendProof("ic 2 (~(p=>q)=>(p=>q))");
-			p.printAllFacts();
 						
 		}
 		
 		public static void testRepeat() throws IllegalLineException, IllegalInferenceException {
-			System.out.println("-------------------------------");
+			//System.out.println("-------------------------------");
 			TheoremSet t = new TheoremSet();
 			Proof p = new Proof(t);
 			p.extendProof("show (p=>p)");
@@ -198,7 +235,6 @@ public class ProofTest extends TestCase {
 			p.extendProof("assume p");
 			p.extendProof("ic 2.1 (p=>p)");
 			p.extendProof("print");
-			p.printAllFacts();
 			p.extendProof("repeat 2 (p=>p)");
 		}
 
