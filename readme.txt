@@ -39,11 +39,21 @@ of subproofs. This is used in extendProof to check, if upon the completion of a 
 ProofTest:
 ==========
 
+ProofTest:
+==========
+
 testIsComplete() initializes a series of sampleProofs which come from the spec. We forego the proof which creates error messages (see bottom)*.
     It extendsProof line by line until the proof is complete.
     
 testIsNegation() tests our method which checks if an expression is preceded by a "~". These tests make sure that expressions ~p and
-~(p=>q) are both made from strings to Expressions.
+    ~(p=>q) are both made from strings to Expressions.
 
+testFollows() tests our method which checks if myRoot of an expression is "=>" to see if a statement is an implication statement. This test makes sure that
+	expressions that include => are both made from strings to Expressions. This method is used  within each of our reason methods to see which part of an input statement,
+	like "mp linenumber linenumber statement" to see which linenumber corresponds to either an implication or a not statement. 
 
+testIC(), testMP(), testRepeat(), testMT() and testPrint() tests our reason methods within extendProof() when the statement is a reason statement. Each test includes multiple
+	subproofs of varying complexity to test if each method is called correctly, that the reason is a well constructed reason statement (right number of elements, doesnt reference
+	a line it doesn't have access to) and that completed statements get added to our hashmap facts.   Each extendProof call is contained within a try statement in order to find
+	bugs in ill-constructed reason statements. 
   
